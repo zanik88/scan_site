@@ -1,11 +1,12 @@
 FROM python:3.10-slim
 
-WORKDIR /app
-
-# Установка системных зависимостей (если требуются для сборки)
+# Установка системных зависимостей и шрифтов для PDF
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
 
 # Копируем и устанавливаем зависимости
 COPY requirements.txt .

@@ -73,12 +73,36 @@ class AuditReport(Base):
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Reestr License SaaS - ПП РФ № 1236")
+
+api_description = """
+Сервис для автоматизированного аудита программного обеспечения и анализа лицензий зависимостей.
+
+**⚠️ Правовое ограничение (Disclaimer):**
+Данный сервис предоставляет предварительный автоматизированный анализ лицензий и компонентов. Результаты проверки не являются окончательным правовым (юридическим) заключением. Использование сервиса не дает юридической гарантии успешного прохождения экспертизы и включения программного обеспечения в Единый реестр российских программ для ЭВМ и БД. Окончательное решение всегда остается за профильными экспертами и регулирующими органами.
+"""
+
+app = FastAPI(
+    title="Reestr License SaaS - ПП РФ № 1236",
+    description=api_description,
+    version="1.0.0"
+)
+
 PDF_DIR = "generated_reports"
 os.makedirs(PDF_DIR, exist_ok=True)
 
 RED_LICENSES = ["GPL", "AGPL", "General Public License", "SSPL"]
 GREEN_LICENSES = ["MIT", "Apache", "BSD", "ISC", "PostgreSQL License"]
+
+
+# Единый блок с HTML для футера
+FOOTER_HTML = """
+<footer style="margin-top: 40px; padding: 20px; text-align: center; color: #7f8c8d; font-size: 12px; border-top: 1px solid #eaeaea;">
+    <b>⚠️ Правовое ограничение:</b> Данный сервис предоставляет предварительный автоматизированный анализ лицензий и компонентов. 
+    Результаты проверки не являются окончательным правовым (юридическим) заключением. 
+    Использование сервиса не дает юридической гарантии успешного прохождения экспертизы и включения программного обеспечения в Единый реестр. 
+    Окончательное решение всегда остается за профильными экспертами и регулирующими органами.
+</footer>
+"""
 
 # --- ЭКСПЕРТНЫЙ СПРАВОЧНИК С УЧЕТОМ ТРЕБОВАНИЙ ПП РФ № 1236 ---
 ENTERPRISE_LICENSE_DB = {
@@ -765,98 +789,32 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
   ext = filename.split(".")[-1].lower()
 
   STOP_WORDS = {
-      "as",
-      "is",
-      "to",
-      "be",
-      "as is",
-      "to be",
-      "субд",
-      "платная",
-      "бесплатная",
-      "nan",
-      "none",
-      "https",
-      "http",
-      "gpl",
-      "apache",
-      "mit",
-      "sdk",
-      "middle",
-      "рф",
-      "сша",
-      "операционная",
-      "система",
-      "балансировщик",
-      "библиотека",
-      "веб",
-      "tier",
-      "компоненты/библиотеки",
-      "сторонний компонент/сервис",
-      "название лицензии",
-      "ссылка на лицензию",
-      "платная/бесплатная",
-      "ссылка на репозиторий",
-      "класс по",
-      "наименование",
-      "версия",
-      "вендор",
-      "тип лицензии",
-      "примеры",
-      "коммерческая",
-      "коммерческая (платная)",
-      "ссылка на файл с лицензией",
-      'по "название_по"',
-      "2-clause bsd",
-      "sspl",
-      "gnu gpl, lgpl",
-      "name",
-      "version",
-      "dependencies",
-      "ос",
-      "пропустят",
-      "название",
-      "лицензия",
-      "описание",
-      "ссылка на текс лицензии",
-      "тип",
-      "комментарий",
-      "ссылка на текст лицензии",
-      "операционная система",
-      "системы управления базами данных",
-      "мониторинг и наблюдаемость",
-      "брокеры сообщений и координация",
-      "хранилище данных в памяти",
-      "платформа виртуализации и управления ресурсами",
-      "контейнеризация",
-      "веб-сервер, балансировщик, прокси-сервер",
-      "инструменты для поиска и аналитики",
-      "фреймворки",
-      "библиотеки",
-      "пакет",
-      "the rust project developers",
-      "microsoft / .net foundation",
-      "bsd-3-clause",
+      "as", "is", "to", "be", "as is", "to be", "субд", "платная",
+      "бесплатная", "nan", "none", "https", "http", "gpl", "apache",
+      "mit", "sdk", "middle", "рф", "сша", "операционная", "система",
+      "балансировщик", "библиотека", "веб", "tier", "компоненты/библиотеки",
+      "сторонний компонент/сервис", "название лицензии", "ссылка на лицензию",
+      "платная/бесплатная", "ссылка на репозиторий", "класс по", "наименование",
+      "версия", "вендор", "тип лицензии", "примеры", "коммерческая",
+      "коммерческая (платная)", "ссылка на файл с лицензией", 'по "название_по"',
+      "2-clause bsd", "sspl", "gnu gpl, lgpl", "name", "version",
+      "dependencies", "ос", "пропустят", "название", "лицензия",
+      "описание", "ссылка на текс лицензии", "тип", "комментарий",
+      "ссылка на текст лицензии", "операционная система",
+      "системы управления базами данных", "мониторинг и наблюдаемость",
+      "брокеры сообщений и координация", "хранилище данных в памяти",
+      "платформа виртуализации и управления ресурсами", "контейнеризация",
+      "веб-сервер, балансировщик, прокси-сервер", "инструменты для поиска и аналитики",
+      "фреймворки", "библиотеки", "пакет", "the rust project developers",
+      "microsoft / .net foundation", "bsd-3-clause",
   }
 
   STOP_SUBSTRINGS = [
-      "license",
-      "terms",
-      "conditions",
-      "agreement",
-      "repository",
-      "репозиторий",
-      "соглашение",
-      "enterprise edition",
-      "хотим обратить ваше внимание",
-      "список сторонних компонентов",
-      "представляет собой",
-      "написано на языках",
-      "при разработке",
-      "используются следующие",
-      "mit or apache",
-      "экспортные ограничения",
-      "имеет экспортные",
+      "license", "terms", "conditions", "agreement", "repository", "репозиторий",
+      "соглашение", "enterprise edition", "хотим обратить ваше внимание",
+      "список сторонних компонентов", "представляет собой", "написано на языках",
+      "при разработке", "используются следующие", "mit or apache",
+      "экспортные ограничения", "имеет экспортные",
   ]
 
   def is_garbage_or_version(text: str) -> bool:
@@ -961,7 +919,6 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                 else str(pkg_ver),
             ))
       else:
-
         def extract_json_recursively(obj):
           if isinstance(obj, dict):
             if "name" in obj and "version" in obj:
@@ -1200,10 +1157,11 @@ def generate_pdf_report(report_data: list, filename: str) -> str:
   )
   elements = []
 
-  font_path = "/usr/share/fonts/truetype/msttcorefonts/arial.ttf"
-  font_name = "ArialUnicode" if os.path.exists(font_path) else "Helvetica"
-  if font_name == "ArialUnicode":
-    pdfmetrics.registerFont(TTFont("ArialUnicode", font_path))
+  font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+  font_name = "DejaVuSans" if os.path.exists(font_path) else "Helvetica"
+  
+  if font_name == "DejaVuSans":
+      pdfmetrics.registerFont(TTFont("DejaVuSans", font_path))
 
   styles = getSampleStyleSheet()
   title_style = ParagraphStyle(
@@ -1220,6 +1178,15 @@ def generate_pdf_report(report_data: list, filename: str) -> str:
       fontName=font_name,
       fontSize=10,
       textColor=colors.HexColor("#333333"),
+  )
+  disclaimer_style = ParagraphStyle(
+      "DisclaimerStyle",
+      parent=styles["Normal"],
+      fontName=font_name,
+      fontSize=9,
+      textColor=colors.HexColor("#7f8c8d"),
+      leading=11,
+      spaceBefore=20,
   )
   cell_style = ParagraphStyle(
       "CellStyle",
@@ -1284,6 +1251,17 @@ def generate_pdf_report(report_data: list, filename: str) -> str:
       ])
   )
   elements.append(t)
+
+  # ДОБАВЛЕНО: Правовой дисклеймер в PDF отчет
+  elements.append(
+      Paragraph(
+          "<b>Внимание:</b> Данный отчет предоставляет предварительный автоматизированный анализ лицензий и компонентов. "
+          "Результаты проверки не являются окончательным правовым (юридическим) заключением. "
+          "Использование сервиса не дает юридической гарантии успешного прохождения экспертизы и включения программного обеспечения в Единый реестр.",
+          disclaimer_style
+      )
+  )
+
   doc.build(elements)
   return filepath
 
@@ -1339,26 +1317,27 @@ async def index(request: Request, db: Session = Depends(get_db)):
         " href='/register' class='nav-btn nav-btn-secondary'>Регистрация</a>"
     )
 
-  html_content = """
+  html_content = f"""
     <!DOCTYPE html>
     <html lang="ru">
     <head>
         <meta charset="UTF-8">
         <title>Аудит лицензий ПО по ПП РФ № 1236</title>
         <style>
-            body { font-family: Arial, sans-serif; max-width: 850px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; color: #333; }
-            .card { background: white; padding: 35px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-            .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }
-            h1 { color: #2c3e50; font-size: 24px; margin: 0; line-height: 1.3; }
-            .auth-buttons { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+            body {{ font-family: Arial, sans-serif; max-width: 850px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; color: #333; display: flex; flex-direction: column; min-height: 90vh; }}
+            .content {{ flex: 1; }}
+            .card {{ background: white; padding: 35px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }}
+            .header-flex {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; flex-wrap: wrap; }}
+            h1 {{ color: #2c3e50; font-size: 24px; margin: 0; line-height: 1.3; }}
+            .auth-buttons {{ display: flex; align-items: center; gap: 10px; white-space: nowrap; }}
 
-            .nav-btn { padding: 8px 18px; font-size: 14px; font-weight: 600; border-radius: 20px; text-decoration: none; display: inline-block; transition: background 0.2s; }
-            .nav-btn-primary { background: #3498db; color: white; }
-            .nav-btn-primary:hover { background: #2980b9; }
-            .nav-btn-secondary { background: #95a5a6; color: white; }
-            .nav-btn-secondary:hover { background: #7f8c8d; }
+            .nav-btn {{ padding: 8px 18px; font-size: 14px; font-weight: 600; border-radius: 20px; text-decoration: none; display: inline-block; transition: background 0.2s; }}
+            .nav-btn-primary {{ background: #3498db; color: white; }}
+            .nav-btn-primary:hover {{ background: #2980b9; }}
+            .nav-btn-secondary {{ background: #95a5a6; color: white; }}
+            .nav-btn-secondary:hover {{ background: #7f8c8d; }}
 
-            input[type=file] {
+            input[type=file] {{
                 margin: 20px 0;
                 padding: 14px;
                 border: 2px dashed #3498db;
@@ -1368,8 +1347,8 @@ async def index(request: Request, db: Session = Depends(get_db)):
                 background: #f8fafc;
                 font-size: 15px;
                 cursor: pointer;
-            }
-            input[type=file]::file-selector-button {
+            }}
+            input[type=file]::file-selector-button {{
                 background: #3498db;
                 color: white;
                 border: none;
@@ -1380,40 +1359,40 @@ async def index(request: Request, db: Session = Depends(get_db)):
                 cursor: pointer;
                 margin-right: 15px;
                 transition: background 0.2s;
-            }
-            input[type=file]::file-selector-button:hover {
+            }}
+            input[type=file]::file-selector-button:hover {{
                 background: #2980b9;
-            }
+            }}
 
-            .submit-btn { background: #27ae60; color: white; border: none; padding: 12px 28px; font-size: 16px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: background 0.2s; display: inline-block; margin-top: 10px; }
-            .submit-btn:hover { background: #219653; }
-            .formats { font-size: 13px; color: #666; margin-top: 5px; }
-            p { color: #555; line-height: 1.5; }
+            .submit-btn {{ background: #27ae60; color: white; border: none; padding: 12px 28px; font-size: 16px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: background 0.2s; display: inline-block; margin-top: 10px; }}
+            .submit-btn:hover {{ background: #219653; }}
+            .formats {{ font-size: 13px; color: #666; margin-top: 5px; }}
+            p {{ color: #555; line-height: 1.5; }}
         </style>
     </head>
     <body>
-        <div class="card">
-            <div class="header-flex">
-                <h1>🛡️ SaaS Аудит Лицензий<br><span style="font-size: 16px; font-weight: normal; color: #666;">Соответствие правилам ПП РФ № 1236</span></h1>
-                <div class="auth-buttons">
-                    USER_BAR_PLACEHOLDER
+        <div class="content">
+            <div class="card">
+                <div class="header-flex">
+                    <h1>🛡️ SaaS Аудит Лицензий<br><span style="font-size: 16px; font-weight: normal; color: #666;">Соответствие правилам ПП РФ № 1236</span></h1>
+                    <div class="auth-buttons">
+                        {user_bar_html}
+                    </div>
                 </div>
+                {guest_info_html}
+                <p>Загрузите файл с компонентами вашего проекта (манифест зависимостей или выгрузку) для автоматической проверки лицензий и рисков импортозамещения.</p>
+                <form action="/upload" method="post" enctype="multipart/form-data">
+                    <input type="file" name="file" accept=".txt,.xlsx,.xls,.json,.lock,.docx" required>
+                    <div class="formats">Поддерживаемые форматы: <b>.txt</b>, <b>.xlsx / .xls</b>, <b>.json</b>, <b>.lock</b>, <b>.docx</b></div>
+                    <br>
+                    <button type="submit" class="submit-btn">🚀 Начать аудит</button>
+                </form>
             </div>
-            GUEST_INFO_PLACEHOLDER
-            <p>Загрузите файл с компонентами вашего проекта (манифест зависимостей или выгрузку) для автоматической проверки лицензий и рисков импортозамещения.</p>
-            <form action="/upload" method="post" enctype="multipart/form-data">
-                <input type="file" name="file" accept=".txt,.xlsx,.xls,.json,.lock,.docx" required>
-                <div class="formats">Поддерживаемые форматы: <b>.txt</b>, <b>.xlsx / .xls</b>, <b>.json</b>, <b>.lock</b>, <b>.docx</b></div>
-                <br>
-                <button type="submit" class="submit-btn">🚀 Начать аудит</button>
-            </form>
         </div>
+        {FOOTER_HTML}
     </body>
     </html>
     """
-  html_content = html_content.replace(
-      "USER_BAR_PLACEHOLDER", user_bar_html
-  ).replace("GUEST_INFO_PLACEHOLDER", guest_info_html)
   return HTMLResponse(content=html_content)
 
 
@@ -1544,7 +1523,8 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     html_content = f"""
 <!DOCTYPE html>
 <html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
-<style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
+<style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; display: flex; flex-direction: column; min-height: 90vh; }}
+.content {{ flex: 1; }}
 .card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
 table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
 th, td {{ padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }}
@@ -1552,49 +1532,22 @@ th {{ background: #2c3e50; color: white; }}
 .btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; margin-top: 20px; transition: background 0.2s; }}
 .btn:hover {{ background: #2980b9; }}
 </style></head>
-<body><div class="card">
+<body>
+<div class="content">
+<div class="card">
 <h2>Личный кабинет</h2>
 <p><b>Email:</b> {user.email} (Роль: <i>{user.role}</i>)</p>
 <p><b>Статус подписки:</b> <span style="color: green;">{user.subscription_status}</span></p>
 <h3>История ваших проверок</h3>
 <table><tr><th>Файл</th><th>Дата</th><th>PDF Отчет</th><th>Excel Отчет</th>{action_header}</tr>{report_rows if report_rows else f"<tr><td colspan='{empty_colspan}'>История пуста</td></tr>"}</table>
 <br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
-</div></body></html>
+</div>
+</div>
+{FOOTER_HTML}
+</body></html>
 """
     return HTMLResponse(content=html_content)
 
-    action_header = "<th>Действие</th>" if is_admin else ""
-    empty_colspan = "5" if is_admin else "4"
-
-    html_content = f"""
-<!DOCTYPE html>
-<html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
-<style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
-.card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
-table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-th, td {{ padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }}
-th {{ background: #2c3e50; color: white; }}
-.btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; margin-top: 20px; transition: background 0.2s; }}
-.btn:hover {{ background: #2980b9; }}
-</style></head>
-<body><div class="card">
-<h2>Личный кабинет</h2>
-<p><b>Email:</b> {user.email} (Роль: <i>{user.role}</i>)</p>
-<p><b>Статус подписки:</b> <span style="color: green;">{user.subscription_status}</span></p>
-<h3>История ваших проверок</h3>
-<table><tr><th>Файл</th><th>Дата</th><th>PDF Отчет</th><th>Excel Отчет</th>{action_header}</tr>{report_rows if report_rows else f"<tr><td colspan='{empty_colspan}'>История пуста</td></tr>"}</table>
-<br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
-</div></body></html>
-"""
-    return HTMLResponse(content=html_content)
-
-    admin_btn = (
-        '<a href="/admin" class="btn" style="background: #e74c3c; margin-left: '
-        '10px;">👑 Админ-панель</a>'
-        if is_admin
-        else ""
-    )
-    import os
 
 @app.post("/reports/delete/{report_id}")
 async def delete_report(report_id: int, request: Request, db: Session = Depends(get_db)):
@@ -1608,7 +1561,6 @@ async def delete_report(report_id: int, request: Request, db: Session = Depends(
 
     report = db.query(AuditReport).filter(AuditReport.id == report_id).first()
     if report:
-        # Удаляем сгенерированные файлы с диска
         for fname in [report.pdf_filename, report.excel_filename]:
             if fname:
                 filepath = os.path.join("generated_reports", fname)
@@ -1617,59 +1569,10 @@ async def delete_report(report_id: int, request: Request, db: Session = Depends(
                         os.remove(filepath)
                     except OSError:
                         pass
-
-        # Удаляем запись из базы данных
         db.delete(report)
         db.commit()
 
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
-
-    action_header = "<th>Действие</th>" if is_admin else ""
-    empty_colspan = "5" if is_admin else "4"
-
-    html_content = f"""
-<!DOCTYPE html>
-<html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
-<style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
-.card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
-table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-th, td {{ padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }}
-th {{ background: #2c3e50; color: white; }}
-.btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; margin-top: 20px; transition: background 0.2s; }}
-.btn:hover {{ background: #2980b9; }}
-</style></head>
-<body><div class="card">
-<h2>Личный кабинет</h2>
-<p><b>Email:</b> {user.email} (Роль: <i>{user.role}</i>)</p>
-<p><b>Статус подписки:</b> <span style="color: green;">{user.subscription_status}</span></p>
-<h3>История ваших проверок</h3>
-<table><tr><th>Файл</th><th>Дата</th><th>PDF Отчет</th><th>Excel Отчет</th>{action_header}</tr>{report_rows if report_rows else f"<tr><td colspan='{empty_colspan}'>История пуста</td></tr>"}</table>
-<br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
-</div></body></html>
-"""
-    return HTMLResponse(content=html_content)
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
-    <style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
-    .card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-    th, td {{ padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }}
-    th {{ background: #2c3e50; color: white; }}
-    .btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; margin-top: 20px; transition: background 0.2s; }}
-    .btn:hover {{ background: #2980b9; }}
-    </style></head>
-    <body><div class="card">
-    <h2>Личный кабинет</h2>
-    <p><b>Email:</b> {user.email} (Роль: <i>{user.role}</i>)</p>
-    <p><b>Статус подписки:</b> <span style="color: green;">{user.subscription_status}</span></p>
-    <h3>История ваших проверок</h3>
-    <table><tr><th>Файл</th><th>Дата</th><th>PDF Отчет</th><th>Excel Отчет</th></tr>{report_rows if report_rows else "<tr><td colspan='4'>История пуста</td></tr>"}</table>
-    <br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
-    </div></body></html>
-    """
-    return HTMLResponse(content=html_content)
 
 
 # --- АДМИН-ПАНЕЛЬ ---
@@ -1714,7 +1617,8 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
     <!DOCTYPE html>
     <html lang="ru"><head><meta charset="UTF-8"><title>Панель администратора</title>
     <style>
-        body {{ font-family: Arial; max-width: 1000px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
+        body {{ font-family: Arial; max-width: 1000px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; display: flex; flex-direction: column; min-height: 90vh; }}
+        .content {{ flex: 1; }}
         .card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }}
         table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }}
         th, td {{ padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }}
@@ -1722,18 +1626,21 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         .btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; transition: background 0.2s; }}
     </style></head>
     <body>
-        <div class="card">
-            <h2>👑 Панель управления системой</h2>
-            <a href="/" class="btn">← На главную</a><a href="/dashboard" class="btn" style="background: #7f8c8d; margin-left: 10px;">Личный кабинет</a>
+        <div class="content">
+            <div class="card">
+                <h2>👑 Панель управления системой</h2>
+                <a href="/" class="btn">← На главную</a><a href="/dashboard" class="btn" style="background: #7f8c8d; margin-left: 10px;">Личный кабинет</a>
+            </div>
+            <div class="card">
+                <h3>Пользователи и сброс паролей (Всего: {len(all_users)})</h3>
+                <table><tr><th>ID</th><th>Email</th><th>Роль</th><th>Смена пароля</th></tr>{users_html if users_html else "<tr><td colspan='4'>Нет данных</td></tr>"}</table>
+            </div>
+            <div class="card">
+                <h3>Все созданные отчеты (Всего: {len(all_reports)})</h3>
+                <table><tr><th>ID</th><th>Владелец</th><th>Оригинальный файл</th><th>Дата проверки</th><th>Скачать</th><th>Действие</th></tr>{reports_html if reports_html else "<tr><td colspan='5'>Нет данных</td></tr>"}</table>
+            </div>
         </div>
-        <div class="card">
-            <h3>Пользователи и сброс паролей (Всего: {len(all_users)})</h3>
-            <table><tr><th>ID</th><th>Email</th><th>Роль</th><th>Смена пароля</th></tr>{users_html if users_html else "<tr><td colspan='4'>Нет данных</td></tr>"}</table>
-        </div>
-        <div class="card">
-            <h3>Все созданные отчеты (Всего: {len(all_reports)})</h3>
-            <table><tr><th>ID</th><th>Владелец</th><th>Оригинальный файл</th><th>Дата проверки</th><th>Скачать</th><th>Действие</th></tr>{reports_html if reports_html else "<tr><td colspan='5'>Нет данных</td></tr>"}</table>
-        </div>
+        {FOOTER_HTML}
     </body></html>
     """
   return HTMLResponse(content=html_content)
@@ -1856,7 +1763,8 @@ async def upload_file(
     <html lang="ru"><head><meta charset="UTF-8"><title>Результаты аудита (ПП РФ № 1236)</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
-            body {{ font-family: Arial, sans-serif; max-width: 950px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; color: #333; position: relative; }}
+            body {{ font-family: Arial, sans-serif; max-width: 950px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; color: #333; position: relative; display: flex; flex-direction: column; min-height: 90vh; }}
+            .content {{ flex: 1; }}
             .card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }}
             .stats-container {{ display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; margin-bottom: 20px; }}
             .chart-box {{ width: 280px; height: 280px; }}
@@ -1906,56 +1814,59 @@ async def upload_file(
         </style>
     </head>
     <body>
-        <div class="card">
-            <div style='margin-bottom: 20px;'><a href='/' style='background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; font-size: 14px; margin-right: 10px;'>← На главную</a><a href='/dashboard' style='background: #7f8c8d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; font-size: 14px;'>Личный кабинет</a></div>
-<h1>📊 Результаты аудита (ПП РФ № 1236)</h1>
-            {demo_banner}
-            <p>Проанализировано компонентов: <b>{total_count if user else "Более 3"}</b></p>
-            <div class="stats-container">
-                <div class="chart-box"><canvas id="auditChart"></canvas></div>
-                <div class="stat-cards">
-                    <div class="stat-badge badge-safe" onclick="filterRows('safe')">✅ Разрешено / Реестр: {safe_count}</div>
-                    <div class="stat-badge badge-danger" onclick="filterRows('danger')">❌ Нарушения / Риски: {danger_count}</div>
-                    <div class="stat-badge badge-warn" onclick="filterRows('warn')">⚠️ Требует внимания: {warn_count}</div>
-                    <div class="stat-badge badge-reset" onclick="filterRows('all')">🔄 Сбросить фильтр</div>
+        <div class="content">
+            <div class="card">
+                <div style='margin-bottom: 20px;'><a href='/' style='background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; font-size: 14px; margin-right: 10px;'>← На главную</a><a href='/dashboard' style='background: #7f8c8d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; font-size: 14px;'>Личный кабинет</a></div>
+                <h1>📊 Результаты аудита (ПП РФ № 1236)</h1>
+                {demo_banner}
+                <p>Проанализировано компонентов: <b>{total_count if user else "Более 3"}</b></p>
+                <div class="stats-container">
+                    <div class="chart-box"><canvas id="auditChart"></canvas></div>
+                    <div class="stat-cards">
+                        <div class="stat-badge badge-safe" onclick="filterRows('safe')">✅ Разрешено / Реестр: {safe_count}</div>
+                        <div class="stat-badge badge-danger" onclick="filterRows('danger')">❌ Нарушения / Риски: {danger_count}</div>
+                        <div class="stat-badge badge-warn" onclick="filterRows('warn')">⚠️ Требует внимания: {warn_count}</div>
+                        <div class="stat-badge badge-reset" onclick="filterRows('all')">🔄 Сбросить фильтр</div>
+                    </div>
                 </div>
+                <script>
+                    const ctx = document.getElementById('auditChart').getContext('2d');
+                    new Chart(ctx, {{
+                        type: 'doughnut',
+                        data: {{ labels: ['Разрешено', 'Запрещено', 'Внимание / Скрыто'], datasets: [{{ data: [{safe_count}, {danger_count}, {warn_count}], backgroundColor: ['#27ae60', '#c0392b', '#d35400'], borderWidth: 2 }}] }},
+                        options: {{ responsive: true, plugins: {{ legend: {{ position: 'bottom' }} }} }}
+                    }});
+                    function filterRows(category) {{
+                        document.querySelectorAll('tr[data-category]').forEach(row => {{ row.style.display = (category === 'all' || row.getAttribute('data-category') === category) ? '' : 'none'; }});
+                    }}
+                </script>
             </div>
+            <div class="card">
+                <h3>Детальный список компонентов</h3>
+                <table><thead><tr><th>Компонент</th><th>Лицензия и основание</th><th>Статус (ПП РФ № 1236)</th></tr></thead><tbody>{rows}</tbody></table><br>
+                <a href="/download/{pdf_filename}" class="btn">📥 Скачать официальный PDF-отчет</a>
+                <a href="/download_excel/{excel_filename}" class="btn" style="background: #27ae60; margin-left: 10px;">📊 Скачать Excel-отчет</a>
+                <a href="/" class="btn" style="background: #95a5a6; margin-left: 10px;">← На главную</a>
+            </div>
+            
+            <a href="#" class="back-to-top" id="backToTopBtn" title="Наверх">↑</a>
+
             <script>
-                const ctx = document.getElementById('auditChart').getContext('2d');
-                new Chart(ctx, {{
-                    type: 'doughnut',
-                    data: {{ labels: ['Разрешено', 'Запрещено', 'Внимание / Скрыто'], datasets: [{{ data: [{safe_count}, {danger_count}, {warn_count}], backgroundColor: ['#27ae60', '#c0392b', '#d35400'], borderWidth: 2 }}] }},
-                    options: {{ responsive: true, plugins: {{ legend: {{ position: 'bottom' }} }} }}
+                const backToTopBtn = document.getElementById('backToTopBtn');
+                window.addEventListener('scroll', () => {{
+                    if (window.scrollY > 300) {{
+                        backToTopBtn.classList.add('show');
+                    }} else {{
+                        backToTopBtn.classList.remove('show');
+                    }}
                 }});
-                function filterRows(category) {{
-                    document.querySelectorAll('tr[data-category]').forEach(row => {{ row.style.display = (category === 'all' || row.getAttribute('data-category') === category) ? '' : 'none'; }});
-                }}
+                backToTopBtn.addEventListener('click', (e) => {{
+                    e.preventDefault();
+                    window.scrollTo({{ top: 0, behavior: 'smooth' }});
+                }});
             </script>
         </div>
-        <div class="card">
-            <h3>Детальный список компонентов</h3>
-            <table><thead><tr><th>Компонент</th><th>Лицензия и основание</th><th>Статус (ПП РФ № 1236)</th></tr></thead><tbody>{rows}</tbody></table><br>
-            <a href="/download/{pdf_filename}" class="btn">📥 Скачать официальный PDF-отчет</a>
-            <a href="/download_excel/{excel_filename}" class="btn" style="background: #27ae60; margin-left: 10px;">📊 Скачать Excel-отчет</a>
-            <a href="/" class="btn" style="background: #95a5a6; margin-left: 10px;">← На главную</a>
-        </div>
-        
-        <a href="#" class="back-to-top" id="backToTopBtn" title="Наверх">↑</a>
-
-        <script>
-            const backToTopBtn = document.getElementById('backToTopBtn');
-            window.addEventListener('scroll', () => {{
-                if (window.scrollY > 300) {{
-                    backToTopBtn.classList.add('show');
-                }} else {{
-                    backToTopBtn.classList.remove('show');
-                }}
-            }});
-            backToTopBtn.addEventListener('click', (e) => {{
-                e.preventDefault();
-                window.scrollTo({{ top: 0, behavior: 'smooth' }});
-            }});
-        </script>
+        {FOOTER_HTML}
     </body></html>
     """
 

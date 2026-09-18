@@ -1500,27 +1500,156 @@ async def logout():
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request, db: Session = Depends(get_db)):
-  user_email = request.cookies.get("user_email")
-  if not user_email:
-    return RedirectResponse(url="/login")
-  user = db.query(User).filter(User.email == user_email).first()
-  reports = db.query(AuditReport).filter(AuditReport.user_id == user.id).all()
+    user_email = request.cookies.get("user_email")
+    if not user_email:
+        return RedirectResponse(url="/login")
+    user = db.query(User).filter(User.email == user_email).first()
+    if not user:
+        return RedirectResponse(url="/login")
+        
+    reports = db.query(AuditReport).filter(AuditReport.user_id == user.id).all()
 
-  report_rows = "".join([
-      f"<tr><td>{r.filename}</td><td>{r.created_at.strftime('%Y-%m-%d %H:%M')}</td><td><a"
-      f" href='/download/{r.pdf_filename}'>Скачать"
-      f" PDF</a></td><td><a href='/download_excel/{r.excel_filename}'>Скачать"
-      " Excel</a></td></tr>"
-      for r in reports
-  ])
-  admin_btn = (
-      '<a href="/admin" class="btn" style="background: #e74c3c; margin-left:'
-      ' 10px;">👑 Админ-панель</a>'
-      if user.role == "admin"
-      else ""
-  )
+    is_admin = user.role == "admin"
 
-  html_content = f"""
+    rows = []
+    for r in reports:
+        del_btn = ""
+        if is_admin:
+            del_btn = (
+                f"<td><form method='POST' action='/reports/delete/{r.id}' "
+                f"onsubmit=\"return confirm('Удалить эту запись?');\" style='margin:0;'>"
+                f"<button type='submit' style='background:none; border:none; color:#e74c3c; "
+                f"cursor:pointer; font-weight:bold; text-decoration:underline;'>Удалить</button>"
+                f"</form></td>"
+            )
+
+        rows.append(
+            f"<tr><td>{r.filename}</td><td>{r.created_at.strftime('%Y-%m-%d %H:%M')}</td>"
+            f"<td><a href='/download/{r.pdf_filename}'>Скачать PDF</a></td>"
+            f"<td><a href='/download_excel/{r.excel_filename}'>Скачать Excel</a></td>"
+            f"{del_btn}</tr>"
+        )
+
+    report_rows = "".join(rows)
+
+    admin_btn = (
+        '<a href="/admin" class="btn" style="background: #e74c3c; margin-left: 10px;">👑 Админ-панель</a>'
+        if is_admin
+        else ""
+    )
+
+    action_header = "<th>Действие</th>" if is_admin else ""
+    empty_colspan = "5" if is_admin else "4"
+
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
+<style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
+.card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
+table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+th, td {{ padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }}
+th {{ background: #2c3e50; color: white; }}
+.btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; margin-top: 20px; transition: background 0.2s; }}
+.btn:hover {{ background: #2980b9; }}
+</style></head>
+<body><div class="card">
+<h2>Личный кабинет</h2>
+<p><b>Email:</b> {user.email} (Роль: <i>{user.role}</i>)</p>
+<p><b>Статус подписки:</b> <span style="color: green;">{user.subscription_status}</span></p>
+<h3>История ваших проверок</h3>
+<table><tr><th>Файл</th><th>Дата</th><th>PDF Отчет</th><th>Excel Отчет</th>{action_header}</tr>{report_rows if report_rows else f"<tr><td colspan='{empty_colspan}'>История пуста</td></tr>"}</table>
+<br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
+</div></body></html>
+"""
+    return HTMLResponse(content=html_content)
+
+    action_header = "<th>Действие</th>" if is_admin else ""
+    empty_colspan = "5" if is_admin else "4"
+
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
+<style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
+.card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
+table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+th, td {{ padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }}
+th {{ background: #2c3e50; color: white; }}
+.btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; margin-top: 20px; transition: background 0.2s; }}
+.btn:hover {{ background: #2980b9; }}
+</style></head>
+<body><div class="card">
+<h2>Личный кабинет</h2>
+<p><b>Email:</b> {user.email} (Роль: <i>{user.role}</i>)</p>
+<p><b>Статус подписки:</b> <span style="color: green;">{user.subscription_status}</span></p>
+<h3>История ваших проверок</h3>
+<table><tr><th>Файл</th><th>Дата</th><th>PDF Отчет</th><th>Excel Отчет</th>{action_header}</tr>{report_rows if report_rows else f"<tr><td colspan='{empty_colspan}'>История пуста</td></tr>"}</table>
+<br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
+</div></body></html>
+"""
+    return HTMLResponse(content=html_content)
+
+    admin_btn = (
+        '<a href="/admin" class="btn" style="background: #e74c3c; margin-left: '
+        '10px;">👑 Админ-панель</a>'
+        if is_admin
+        else ""
+    )
+    import os
+
+@app.post("/reports/delete/{report_id}")
+async def delete_report(report_id: int, request: Request, db: Session = Depends(get_db)):
+    user_email = request.cookies.get("user_email")
+    if not user_email:
+        return RedirectResponse(url="/login")
+        
+    user = db.query(User).filter(User.email == user_email).first()
+    if not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="Недостаточно прав для удаления отчета")
+
+    report = db.query(AuditReport).filter(AuditReport.id == report_id).first()
+    if report:
+        # Удаляем сгенерированные файлы с диска
+        for fname in [report.pdf_filename, report.excel_filename]:
+            if fname:
+                filepath = os.path.join("generated_reports", fname)
+                if os.path.exists(filepath):
+                    try:
+                        os.remove(filepath)
+                    except OSError:
+                        pass
+
+        # Удаляем запись из базы данных
+        db.delete(report)
+        db.commit()
+
+    return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+
+    action_header = "<th>Действие</th>" if is_admin else ""
+    empty_colspan = "5" if is_admin else "4"
+
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
+<style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
+.card {{ background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
+table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+th, td {{ padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }}
+th {{ background: #2c3e50; color: white; }}
+.btn {{ background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; margin-top: 20px; transition: background 0.2s; }}
+.btn:hover {{ background: #2980b9; }}
+</style></head>
+<body><div class="card">
+<h2>Личный кабинет</h2>
+<p><b>Email:</b> {user.email} (Роль: <i>{user.role}</i>)</p>
+<p><b>Статус подписки:</b> <span style="color: green;">{user.subscription_status}</span></p>
+<h3>История ваших проверок</h3>
+<table><tr><th>Файл</th><th>Дата</th><th>PDF Отчет</th><th>Excel Отчет</th>{action_header}</tr>{report_rows if report_rows else f"<tr><td colspan='{empty_colspan}'>История пуста</td></tr>"}</table>
+<br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
+</div></body></html>
+"""
+    return HTMLResponse(content=html_content)
+
+    html_content = f"""
     <!DOCTYPE html>
     <html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
     <style>body {{ font-family: Arial; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }}
@@ -1540,7 +1669,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     <br><a href="/" class="btn">← На главную</a><a href="/logout" class="btn" style="background: #7f8c8d; margin-left: 10px;">Выйти</a>{admin_btn}
     </div></body></html>
     """
-  return HTMLResponse(content=html_content)
+    return HTMLResponse(content=html_content)
 
 
 # --- АДМИН-ПАНЕЛЬ ---
@@ -1577,7 +1706,7 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
 
   reports_html = "".join([
       f"<tr><td>{r.id}</td><td>{r.owner.email if r.owner else 'Удален'}</td><td>{r.filename}</td><td>{r.created_at.strftime('%Y-%m-%d %H:%M')}</td><td><a"
-      f" href='/download/{r.pdf_filename}'>PDF</a></td></tr>"
+      f" href='/download/{r.pdf_filename}'>PDF</a></td><td><form method='POST' action='/reports/delete/{r.id}' onsubmit='return confirm(&#39;Удалить этот отчет навсегда?&#39;);' style='margin:0;'><button type='submit' style='background:none;border:none;color:#e74c3c;cursor:pointer;font-weight:bold;text-decoration:underline;'>Удалить</button></form></td></tr>"
       for r in all_reports
   ])
 
@@ -1603,7 +1732,7 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         </div>
         <div class="card">
             <h3>Все созданные отчеты (Всего: {len(all_reports)})</h3>
-            <table><tr><th>ID</th><th>Владелец</th><th>Оригинальный файл</th><th>Дата проверки</th><th>Скачать</th></tr>{reports_html if reports_html else "<tr><td colspan='5'>Нет данных</td></tr>"}</table>
+            <table><tr><th>ID</th><th>Владелец</th><th>Оригинальный файл</th><th>Дата проверки</th><th>Скачать</th><th>Действие</th></tr>{reports_html if reports_html else "<tr><td colspan='5'>Нет данных</td></tr>"}</table>
         </div>
     </body></html>
     """

@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  reestr_saas:
+    build: .
+    container_name: reestr_license_app
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./saas_audit.db:/app/saas_audit.db
+      - ./generated_reports:/app/generated_reports

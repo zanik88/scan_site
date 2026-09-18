@@ -1,0 +1,8 @@
+cat << 'EOF' > .dockerignore
+venv/
+__pycache__/
+saas_audit.db
+generated_reports/
+.git
+.gitignore
+EOF

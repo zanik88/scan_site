@@ -1907,7 +1907,8 @@ async def upload_file(
     </head>
     <body>
         <div class="card">
-            <h1>📊 Результаты аудита (ПП РФ № 1236)</h1>
+            <div style='margin-bottom: 20px;'><a href='/' style='background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; font-size: 14px; margin-right: 10px;'>← На главную</a><a href='/dashboard' style='background: #7f8c8d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 20px; display: inline-block; font-size: 14px;'>Личный кабинет</a></div>
+<h1>📊 Результаты аудита (ПП РФ № 1236)</h1>
             {demo_banner}
             <p>Проанализировано компонентов: <b>{total_count if user else "Более 3"}</b></p>
             <div class="stats-container">

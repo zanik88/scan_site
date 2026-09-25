@@ -463,30 +463,37 @@ def _detect_category(name: str) -> str:
     if not n:
         return "Прочее"
 
-    if any(k in n for k in ["unity", "unreal", "godot", "cryengine"]):
-        return "Игровые движки"
+    # ВАЖНО: СУБД проверяем РАНЬШЕ игровых движков, чтобы "community" не
+    # попадало под "unity". Используем границы слов через regex.
+    def _has_word(text, word):
+        return re.search(r'\b' + re.escape(word) + r'\b', text) is not None
 
-    if any(k in n for k in ["aws", "azure", "google", "firebase", "amazon web services", "yandex cloud", "sbercloud"]):
-        return "Облачные сервисы"
-
-    if any(k in n for k in ["docker", "kubernetes", "k8s", "containerd", "podman", "helm",
-                             "kustomize", "openshift", "rancher", "istio", "envoy", "etcd", "traefik"]):
-        return "Контейнеризация и оркестрация"
-
-    os_keys = ["windows", "linux", "ubuntu", "debian", "centos", "red hat", "rhel", "fedora",
-               "suse", "alpine", "astra", "alt linux", "ред ос", "red os", "роса", "rosa",
-               "macos", "freebsd", "openbsd", "gentoo", "almalinux", "rocky", "opensuse",
-               "slackware", "mandriva", "mint", "busybox", "systemd", "glibc", "gnu bash", "bash"]
-    if any(k in n for k in os_keys):
-        return "Операционные системы"
-
+    # СУБД и хранилища (первым делом — во избежание ложных срабатываний)
     db_keys = ["postgres", "mysql", "mariadb", "oracle", "sql server", "sqlite", "mongodb",
                "redis", "valkey", "clickhouse", "cassandra", "scylladb", "couchdb", "neo4j",
                "elasticsearch", "opensearch", "kafka", "rabbitmq", "zookeeper", "influxdb",
-               "sap hana", "enterprisedb", "npgsql", "boto3", "botocore", "s3transfer",
-               "devart", "db2", "teradata"]
-    if any(k in n for k in db_keys):
+               "sap hana", "enterprisedb", "npgsql", "db2", "teradata", "firebird", "hive",
+               "tibero", "tmax"]
+    if any(_has_word(n, k) for k in db_keys):
         return "СУБД и хранилища"
+
+    # Игровые движки (после СУБД)
+    if any(_has_word(n, k) for k in ["unity", "unreal", "godot", "cryengine"]):
+        return "Игровые движки"
+
+    if any(_has_word(n, k) for k in ["aws", "azure", "firebase", "amazon", "yandex cloud", "sbercloud"]):
+        return "Облачные сервисы"
+
+    if any(_has_word(n, k) for k in ["docker", "kubernetes", "containerd", "podman", "helm",
+                                      "kustomize", "openshift", "rancher", "istio", "envoy", "etcd", "traefik"]):
+        return "Контейнеризация и оркестрация"
+
+    os_keys = ["windows", "linux", "ubuntu", "debian", "centos", "rhel", "fedora",
+               "suse", "alpine", "astra", "macos", "freebsd", "openbsd", "gentoo",
+               "almalinux", "rocky", "opensuse", "slackware", "mandriva", "mint",
+               "busybox", "systemd", "glibc", "bash"]
+    if any(_has_word(n, k) for k in os_keys) or "red hat" in n or "alt linux" in n or "ред ос" in n or "red os" in n or "роса" in n:
+        return "Операционные системы"
 
     if any(k in n for k in ["tensorflow", "pytorch", "keras", "scikit",
                             "transformers", "openai", "gigachat", "yandexgpt", "ollama", "langchain"]):
@@ -1180,6 +1187,17 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
                 "license": "Commercial / DevExpress EULA",
                 "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 Экспортные ограничения. Замена: открытые UI-библиотеки</small>"}
 
+    # Oracle MySQL — различаем Community (разрешено) и Commercial (запрещено)
+    if "mysql" in search_clean:
+        if "community" in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": "GPL-2.0",
+                    "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 MySQL Community Edition — открытая лицензия (GPL)</small>"}
+        elif "oracle" in search_clean or "enterprise" in search_clean or "cluster" in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": "Commercial / Proprietary",
+                    "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 Oracle MySQL (Commercial). Замена: MySQL Community / MariaDB / Postgres Pro</small>"}
+
     # Запрещённые СУБД
     banned_db = [
         ("ibm db2", "IBM DB2"),
@@ -1191,7 +1209,6 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         ("sap sql anywhere", "SAP SQL Anywhere"),
         ("sap hana", "SAP HANA"),
         ("oracle nosql", "Oracle NoSQL"),
-        ("oracle mysql", "Oracle MySQL"),
         ("oracle database", "Oracle Database"),
     ]
     for key, label in banned_db:
@@ -1253,6 +1270,32 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
             return {"name": package_name, "version": table_version,
                     "license": lic,
                     "status": f"✅ Разрешено <br><small style='color:#2f855a;'>💡 {label} — открытая лицензия</small>"}
+
+    # EnterpriseDB — принудительно запрещено (таблица Минцифры)
+    if "enterprisedb" in search_clean or "edb postgres" in search_clean or search_clean == "edb":
+        return {"name": package_name, "version": table_version,
+                "license": "Commercial / Proprietary",
+                "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 EnterpriseDB — коммерческая редакция. Замена: Postgres Pro</small>"}
+
+    # Разрешённые СУБД и серверы приложений из таблицы Минцифры
+    allowed_db_app = [
+        ("couchdb", "Apache CouchDB", "Apache-2.0"),
+        ("hive", "Apache Hive", "Apache-2.0"),
+        ("tibero", "TmaxSoft Tibero", "Commercial (Южная Корея)"),
+        ("libercat", "Libercat", "Российское ПО"),
+        ("enhydra", "Enhydra Server", "Open Source"),
+    ]
+    for key, label, lic in allowed_db_app:
+        if key in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": lic,
+                    "status": f"✅ Разрешено <br><small style='color:#2f855a;'>💡 {label} — открытая лицензия</small>"}
+
+    # Oracle MySQL Community (открытая) vs Commercial (запрещена)
+    if "mysql" in search_clean and "community" in search_clean:
+        return {"name": package_name, "version": table_version,
+                "license": "GPL-2.0",
+                "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 MySQL Community Edition — открытая лицензия</small>"}
 
     # Разрешённые СУБД (open-source из таблицы Минцифры)
     if "firebird" in search_clean:

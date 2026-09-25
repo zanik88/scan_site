@@ -1,0 +1,40 @@
+# --- Environment ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+
+# --- База данных ---
+*.db
+*.sqlite
+*.sqlite3
+data/
+saas_audit.db
+
+# --- Отчёты ---
+generated_reports/
+
+# --- Бэкапы ---
+backups/
+*.tar.gz
+*.working
+main.py.working.*
+
+# --- IDE ---
+.idea/
+.vscode/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Логи ---
+*.log

@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    container_name: component_expert
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////app/data/saas_audit.db
+      COOKIE_SECURE: "false"
+    volumes:
+      - ./generated_reports:/app/generated_reports
+      - ./data:/app/data
+      # Для работы Docker-сканера — монтируем socket хоста
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - expert_net
+
+networks:
+  expert_net:
+    driver: bridge

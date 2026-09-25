@@ -54,7 +54,7 @@ FREE_COMPONENTS_LIMIT = 10
 
 PROGRESS_TRACKER = {}
 
-app = FastAPI(title="Платформа «Компонент-Эксперт» - ПП РФ № 1236", version="8.7.0")
+app = FastAPI(title="Платформа «Компонент-Эксперт» - ПП РФ № 1236", version="9.0.0")
 
 
 # ==========================================
@@ -94,8 +94,21 @@ DEFAULT_RULES = {
     "openbsd": {"license": "BSD", "status": "Разрешено", "recommendation": "ОС с открытой лицензией."},
     "slackware": {"license": "GPL", "status": "Разрешено", "recommendation": "ОС с открытой лицензией."},
 
-    "unity": {"license": "Commercial / Proprietary", "status": "⚠️ Требует внимания", "recommendation": "Временная мера Минцифры."},
-    "unreal": {"license": "Commercial EULA", "status": "⚠️ Требует внимания", "recommendation": "Временная мера Минцифры."},
+    "unity": {
+        "license": "Commercial / Proprietary",
+        "status": "⚠️ Требует внимания",
+        "recommendation": "Временная мера (Письмо Минцифры от 21.08.2023 № АЗ-П11-4-200-216747). Требуется подтвердить: отсутствие выплат правообладателю, отсутствие обязательной регистрации пользователей и отсутствие российских аналогов."
+    },
+    "unreal": {
+        "license": "Commercial EULA",
+        "status": "⚠️ Требует внимания",
+        "recommendation": "Временная мера (Письмо Минцифры от 21.08.2023 № АЗ-П11-4-200-216747). Требуется подтвердить: отсутствие выплат правообладателю, отсутствие обязательной регистрации пользователей и отсутствие российских аналогов."
+    },
+    "unreal engine": {
+        "license": "Commercial EULA",
+        "status": "⚠️ Требует внимания",
+        "recommendation": "Временная мера (Письмо Минцифры от 21.08.2023 № АЗ-П11-4-200-216747). Требуется подтвердить: отсутствие выплат правообладателю, отсутствие обязательной регистрации пользователей и отсутствие российских аналогов."
+    },
 
     "astra linux": {"license": "Commercial / FSTEC", "status": "✅ Разрешено (Российское ПО)", "recommendation": "Astra Linux (реестр №369)."},
     "astra linux special edition": {"license": "Commercial / FSTEC", "status": "✅ Разрешено (Российское ПО)", "recommendation": "Astra Linux (реестр №369)."},
@@ -212,16 +225,52 @@ DEFAULT_RULES = {
     "sentry": {"license": "MIT / BSL", "status": "⚠️ Требует внимания", "recommendation": "Sentry."},
     "uwsgi": {"license": "GPL-2.0", "status": "⚠️ Требует внимания", "recommendation": "GPLv2."},
 
-    "mysql": {"license": "GPL-2.0", "status": "Разрешено с услодальшевиями", "recommendation": "MySQL."},
+    "mysql": {"license": "GPL-2.0", "status": "Разрешено с условиями", "recommendation": "MySQL."},
     "mariadb": {"license": "GPL-2.0", "status": "Разрешено с условиями", "recommendation": "MariaDB."},
     "redis": {"license": "RSALv2 / SSPL / BSD (до 7.2)", "status": "⚠️ Требует внимания", "recommendation": "С 7.4 — SSPL/RSALv2. Альтернатива: Valkey."},
+    "valkey": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "Valkey — форк Redis."},
     "clickhouse": {"license": "Apache-2.0", "status": "Разрешено", "recommendation": "ClickHouse."},
     "rabbitmq": {"license": "MPL-2.0", "status": "Разрешено с условиями", "recommendation": "RabbitMQ."},
     "kafka": {"license": "Apache-2.0", "status": "Разрешено", "recommendation": "Kafka."},
     "zookeeper": {"license": "Apache-2.0", "status": "Разрешено", "recommendation": "ZooKeeper."},
     "sqlite": {"license": "Public Domain", "status": "Разрешено", "recommendation": "SQLite."},
 
+    "systemd": {"license": "LGPL-2.1+", "status": "✅ Разрешено", "recommendation": "Системный менеджер."},
+    "bash": {"license": "GPL-3.0", "status": "✅ Разрешено", "recommendation": "Оболочка."},
+    "gnu bash": {"license": "GPL-3.0", "status": "✅ Разрешено", "recommendation": "Оболочка."},
+    "glibc": {"license": "LGPL-2.1+", "status": "✅ Разрешено", "recommendation": "Системная библиотека C."},
+    "gnu c library": {"license": "LGPL-2.1+", "status": "✅ Разрешено", "recommendation": "Системная библиотека C."},
+    "busybox": {"license": "GPL-2.0", "status": "✅ Разрешено", "recommendation": "Набор утилит."},
+    "containerd": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Контейнерный рантайм."},
+    "podman": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Контейнерный движок."},
+    "kubernetes": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Оркестрация контейнеров."},
+    "helm": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Менеджер пакетов Kubernetes."},
+    "kustomize": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Инструмент конфигурации."},
+    "etcd": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Хранилище ключ-значение."},
+
+    "npgsql": {"license": "PostgreSQL License", "status": "✅ Разрешено", "recommendation": "Драйвер PostgreSQL для .NET."},
+    "pomelo": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Pomelo.EntityFrameworkCore (MySQL)."},
+    "pomelo.jsonobject": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Pomelo.JsonObject."},
+    "pomelo.entityframeworkcore": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Pomelo EF Core."},
+    "devart": {"license": "Commercial", "status": "⚠️ Требует внимания", "recommendation": "Коммерческий драйвер Devart. Требуется лицензия."},
+    "enterprisedb": {"license": "Commercial", "status": "⚠️ Требует внимания", "recommendation": "Коммерческая редакция PostgreSQL. Возможна замена на Postgres Pro."},
+    "newtonsoft.json": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Newtonsoft.Json."},
+    "serilog": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Serilog."},
+    "automapper": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "AutoMapper."},
+    "swashbuckle": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Swashbuckle для .NET."},
+    "swashbuckle.aspnetcore": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Swashbuckle для ASP.NET Core."},
+    "entityframework": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Entity Framework Core."},
+
     "python": {"license": "PSF", "status": "Разрешено", "recommendation": "Python."},
+    "black": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Форматтер кода Black."},
+    "flake8": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Линтер Flake8."},
+    "mypy": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Статический анализатор типов."},
+    "isort": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Сортировщик импортов."},
+    "pylint": {"license": "GPL-2.0", "status": "✅ Разрешено", "recommendation": "Линтер Pylint."},
+    "coverage": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Покрытие тестами."},
+    "tox": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Тестовый раннер."},
+    "pipenv": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Менеджер зависимостей."},
+
     "nginx": {"license": "BSD-2-Clause", "status": "Разрешено", "recommendation": "NGINX."},
     "tomcat": {"license": "Apache-2.0", "status": "Разрешено", "recommendation": "Tomcat."},
     "haproxy": {"license": "GPL-2.0", "status": "Разрешено с условиями", "recommendation": "HAProxy."},
@@ -256,7 +305,53 @@ DEFAULT_RULES = {
     "greenlet": {"license": "MIT", "status": "Разрешено", "recommendation": "greenlet."},
     "httpx": {"license": "BSD-3-Clause", "status": "Разрешено", "recommendation": "httpx."},
     "pytest": {"license": "MIT", "status": "Разрешено", "recommendation": "pytest."},
-    "flake8": {"license": "MIT", "status": "Разрешено", "recommendation": "flake8."},
+
+    # ===== JS / npm экосистема =====
+    "vue": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Vue.js — MIT."},
+    "vue-router": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Vue Router."},
+    "vuex": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Vuex state management."},
+    "vue-tsc": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Vue TypeScript compiler."},
+    "vite": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Vite bundler."},
+    "vitejs": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Vite."},
+    "element-plus": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Element Plus UI."},
+    "react": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "React."},
+    "react-dom": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "React DOM."},
+    "angular": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Angular."},
+    "babel": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Babel transpiler."},
+    "webpack": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Webpack bundler."},
+    "papaparse": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "PapaParse CSV parser."},
+    "luxon": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Luxon date/time."},
+    "uuid": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "UUID generator."},
+    "node": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Node.js runtime."},
+    "nodejs": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Node.js."},
+    "axios": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Axios HTTP client."},
+    "lodash": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Lodash utilities."},
+    "jquery": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "jQuery."},
+    "moment": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Moment.js."},
+    "dayjs": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Day.js."},
+    "chart.js": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Chart.js."},
+    "echarts": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache ECharts."},
+    "sass": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Sass compiler."},
+    "less": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Less."},
+    "typescript": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "TypeScript."},
+    "eslint": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "ESLint."},
+    "prettier": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Prettier."},
+    "next": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Next.js."},
+    "nuxt": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Nuxt.js."},
+    "svelte": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Svelte."},
+    "express": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Express.js."},
+    "nestjs": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "NestJS."},
+
+    # ===== Java-компоненты из отчёта =====
+    "hibernate": {"license": "LGPL-2.1", "status": "Разрешено с условиями", "recommendation": "Hibernate ORM. Динамическая линковка."},
+    "liquibase": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Liquibase DB migrations."},
+    "opencsv": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "OpenCSV."},
+    "mockserver": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "MockServer."},
+    "android-json": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Android JSON."},
+    "keycloak": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Keycloak IAM."},
+    "postgresql": {"license": "PostgreSQL License", "status": "✅ Разрешено", "recommendation": "PostgreSQL JDBC driver."},
+    "awssdk": {"license": "Apache-2.0", "status": "❌ Запрещено", "recommendation": "AWS SDK. Замена: MinIO SDK."},
+    "aws-sdk-php": {"license": "Apache-2.0", "status": "❌ Запрещено", "recommendation": "AWS SDK for PHP. Замена: MinIO SDK."},
 }
 
 
@@ -269,6 +364,9 @@ AI_PROMPT_TEMPLATE = """Ты — эксперт по регуляторике р
 ШАГ 2. Классифицируй риск: НИЗКИЙ / СРЕДНИЙ / ВЫСОКИЙ / ПРОПРИЕТАРНАЯ.
 ШАГ 3. Проверь санкционные риски.
 ШАГ 4. Специфика: Java → российская сборка; Redis 7.4+/MongoDB → SSPL; Elasticsearch → OpenSearch; Windows/CentOS/RHEL → запрещено.
+
+ВАЖНО: Если ты не знаешь точную лицензию, верни "license": "Unknown", "status": "⚠️ Требует внимания". Не выдумывай названия компонентов. Не вставляй текст этой инструкции в свой ответ.
+
 ШАГ 5. Верни СТРОГО JSON без markdown:
 {{"license": "...", "status": "...", "risk_level": "low/medium/high", "recommendation": "...", "registry_analog": "..."}}"""
 
@@ -354,7 +452,213 @@ async def ask_ai_for_license(component_name: str, provider: str = "auto") -> tup
                 return (result["license"], result.get("status", "⚠️ Требует внимания"), f"{rec} (ИИ: {result['provider']})")
 
     print(f"[AI] ❌ Все ИИ недоступны для '{component_name}'.")
-    return ("MIT / Apache-2.0 (Open Source)", "⚠️ Требует внимания", f"Автоматическая проверка недоступна. Требуется ручная верификация лицензии для '{component_name}'.")
+    return ("Не определена", "⚠️ Требует внимания", f"Не удалось определить лицензию для '{component_name}'. Требуется ручная проверка.")
+
+
+# ==========================================
+# ОПРЕДЕЛЕНИЕ КАТЕГОРИЙ
+# ==========================================
+def _detect_category(name: str) -> str:
+    n = (name or "").lower().strip()
+    if not n:
+        return "Прочее"
+
+    if any(k in n for k in ["unity", "unreal", "godot", "cryengine"]):
+        return "Игровые движки"
+
+    if any(k in n for k in ["aws", "azure", "google", "firebase", "amazon web services", "yandex cloud", "sbercloud"]):
+        return "Облачные сервисы"
+
+    if any(k in n for k in ["docker", "kubernetes", "k8s", "containerd", "podman", "helm",
+                             "kustomize", "openshift", "rancher", "istio", "envoy", "etcd", "traefik"]):
+        return "Контейнеризация и оркестрация"
+
+    os_keys = ["windows", "linux", "ubuntu", "debian", "centos", "red hat", "rhel", "fedora",
+               "suse", "alpine", "astra", "alt linux", "ред ос", "red os", "роса", "rosa",
+               "macos", "freebsd", "openbsd", "gentoo", "almalinux", "rocky", "opensuse",
+               "slackware", "mandriva", "mint", "busybox", "systemd", "glibc", "gnu bash", "bash"]
+    if any(k in n for k in os_keys):
+        return "Операционные системы"
+
+    db_keys = ["postgres", "mysql", "mariadb", "oracle", "sql server", "sqlite", "mongodb",
+               "redis", "valkey", "clickhouse", "cassandra", "scylladb", "couchdb", "neo4j",
+               "elasticsearch", "opensearch", "kafka", "rabbitmq", "zookeeper", "influxdb",
+               "sap hana", "enterprisedb", "npgsql", "boto3", "botocore", "s3transfer",
+               "devart", "db2", "teradata"]
+    if any(k in n for k in db_keys):
+        return "СУБД и хранилища"
+
+    if any(k in n for k in ["tensorflow", "pytorch", "keras", "scikit",
+                            "transformers", "openai", "gigachat", "yandexgpt", "ollama", "langchain"]):
+        return "ИИ и ML"
+
+    runtime_keys = ["python", "java", "openjdk", "oracle jdk", "node", "nodejs", "golang",
+                    "rust", "cargo", "dotnet", ".net", "ruby", "php", "perl", "jdk",
+                    "temurin", "corretto", "zulu"]
+    if any(k in n for k in runtime_keys):
+        return "Языки и рантаймы"
+
+    fw_keys = ["fastapi", "django", "flask", "spring", "starlette", "react", "vue", "angular",
+               "next.js", "nuxt", "svelte", "express", "nestjs", "laravel", "rails"]
+    if any(k in n for k in fw_keys):
+        return "Фреймворки"
+
+    if any(k in n for k in ["intellij", "pycharm", "webstorm", "vscode", "visual studio",
+                            "eclipse", "netbeans", "vscodium"]):
+        return "IDE и редакторы"
+
+    tools_keys = ["git", "maven", "gradle", "npm", "yarn", "pnpm", "pip", "poetry",
+                  "webpack", "babel", "eslint", "prettier", "black", "flake8", "pytest",
+                  "junit", "mocha", "jest", "vite", "rollup", "mypy", "isort", "pylint",
+                  "coverage", "tox", "pipenv"]
+    if any(k in n for k in tools_keys):
+        return "Инструменты разработки"
+
+    lib_keys = ["requests", "httpx", "aiohttp", "sqlalchemy", "pydantic", "jinja2",
+                "openpyxl", "reportlab", "python-docx", "pypdf", "bcrypt", "cryptography",
+                "pyjwt", "python-multipart", "python-dotenv", "pandas", "greenlet",
+                "alembic", "psycopg2", "pymongo", "newtonsoft", "serilog", "automapper",
+                "swashbuckle", "entityframework", "pomelo", "jackson", "commons-fileupload"]
+    if any(k in n for k in lib_keys):
+        return "Библиотеки"
+
+    if n.startswith("lib"):
+        return "Системные библиотеки"
+
+    return "Прочее"
+
+
+# ==========================================
+# ПРОВЕРКА УЯЗВИМОСТЕЙ (OSV API)
+# ==========================================
+def _detect_ecosystem(package_name: str) -> Optional[str]:
+    """Определяет экосистему пакета для OSV API."""
+    n = package_name.lower().strip()
+    if not n or n.startswith(("microsoft", "oracle", "sap", "ibm", "adobe", "aws", "azure")):
+        return None
+    if any(x in n for x in ["windows", "linux", "ubuntu", "debian", "centos", "red hat",
+                             "alpine", "freebsd", "macos", "rhel", "fedora", "suse"]):
+        return None
+    # Python-пакеты
+    python_keys = ["fastapi", "uvicorn", "sqlalchemy", "aiohttp", "pandas", "numpy",
+                   "pydantic", "starlette", "requests", "httpx", "jinja2", "pyyaml",
+                   "openpyxl", "reportlab", "pypdf", "python-docx", "bcrypt", "cryptography",
+                   "pyjwt", "python-multipart", "python-dotenv", "psycopg2", "greenlet",
+                   "pytest", "black", "flake8", "mypy", "isort", "pylint", "coverage",
+                   "tox", "pipenv", "poetry", "click", "rich", "alembic", "passlib",
+                   "python-jose", "django", "flask", "scikit-learn", "tensorflow",
+                   "pytorch", "keras", "transformers"]
+    if any(k == n or n.startswith(k + "-") or n.startswith(k + "_") for k in python_keys):
+        return "PyPI"
+    if n in ("jinja2", "werkzeug", "markupsafe", "pillow", "lxml", "beautifulsoup4"):
+        return "PyPI"
+    # JavaScript
+    if any(x in n for x in ["react", "vue", "angular", "express", "webpack", "babel",
+                             "eslint", "prettier", "axios", "lodash", "jquery", "next",
+                             "nuxt", "svelte", "vite", "rollup"]):
+        return "npm"
+    # Java
+    if any(x in n for x in ["spring", "junit", "jackson", "apache", "maven", "lombok",
+                             "hibernate", "log4j", "guava", "mockito"]):
+        return "Maven"
+    # .NET
+    if any(x in n for x in ["newtonsoft", "npgsql", "pomelo", "swashbuckle", "serilog",
+                             "automapper", "entityframework"]):
+        return "NuGet"
+    # Go
+    if any(x in n for x in ["golang", "gin", "echo", "gorilla"]):
+        return "Go"
+    return None
+
+
+async def _fetch_osv_detail(session: aiohttp.ClientSession, vuln_id: str) -> Optional[dict]:
+    """Получает детали уязвимости по ID."""
+    try:
+        url = f"https://api.osv.dev/v1/vulns/{vuln_id}"
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                severity = "UNKNOWN"
+                for sev in data.get("severity", []):
+                    if sev.get("type") == "CVSS_V3":
+                        score_str = sev.get("score", "")
+                        if score_str:
+                            try:
+                                cvss_score = float(score_str.split("/")[0]) if "/" in score_str else float(score_str)
+                                if cvss_score >= 9.0:
+                                    severity = "CRITICAL"
+                                elif cvss_score >= 7.0:
+                                    severity = "HIGH"
+                                elif cvss_score >= 4.0:
+                                    severity = "MEDIUM"
+                                else:
+                                    severity = "LOW"
+                            except Exception:
+                                pass
+                aliases = data.get("aliases", [])
+                cve_ids = [a for a in aliases if a.startswith("CVE-")]
+                return {
+                    "id": vuln_id,
+                    "cve": cve_ids[0] if cve_ids else vuln_id,
+                    "summary": (data.get("summary") or "")[:200],
+                    "severity": severity,
+                    "published": (data.get("published") or "")[:10],
+                }
+    except Exception as e:
+        print(f"[OSV] Ошибка получения {vuln_id}: {e}")
+    return None
+
+
+async def check_osv_vulnerabilities(session: aiohttp.ClientSession, components: list) -> dict:
+    """Проверяет компоненты на известные уязвимости через OSV API."""
+    if not components:
+        return {}
+
+    queries = []
+    valid_names = []
+    for comp in components:
+        name = comp.get("name", "").strip()
+        version = comp.get("version", "").strip()
+        if not name or not version or version == "unknown" or version == "???":
+            continue
+        ecosystem = _detect_ecosystem(name)
+        if ecosystem:
+            queries.append({
+                "package": {"name": name, "ecosystem": ecosystem},
+                "version": version,
+            })
+            valid_names.append(name)
+
+    if not queries:
+        return {}
+
+    try:
+        url = "https://api.osv.dev/v1/querybatch"
+        async with session.post(url, json={"queries": queries},
+                                timeout=aiohttp.ClientTimeout(total=30)) as resp:
+            if resp.status != 200:
+                print(f"[OSV] Ошибка API: {resp.status}")
+                return {}
+            data = await resp.json()
+
+        results = {}
+        for i, item in enumerate(data.get("results", [])):
+            vulns = item.get("vulns", [])
+            if vulns:
+                vuln_details = []
+                for v in vulns[:5]:
+                    vuln_id = v.get("id", "")
+                    detail = await _fetch_osv_detail(session, vuln_id)
+                    if detail:
+                        vuln_details.append(detail)
+                    else:
+                        vuln_details.append({"id": vuln_id, "cve": vuln_id,
+                                             "summary": "", "severity": "UNKNOWN", "published": ""})
+                results[valid_names[i]] = {"count": len(vulns), "vulns": vuln_details}
+        return results
+    except Exception as e:
+        print(f"[OSV] Ошибка проверки: {e}")
+        return {}
 
 
 # ==========================================
@@ -552,6 +856,7 @@ class AuditReport(Base):
     safe_count = Column(Integer, default=0, nullable=True)
     warn_count = Column(Integer, default=0, nullable=True)
     danger_count = Column(Integer, default=0, nullable=True)
+    cve_count = Column(Integer, default=0, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     owner = relationship("User", back_populates="reports")
 
@@ -573,7 +878,6 @@ class VisitLog(Base):
     visited_at = Column(DateTime, default=datetime.utcnow)
 
 
-# НОВОЕ: модель обратной связи
 class Feedback(Base):
     __tablename__ = "feedback"
     id = Column(Integer, primary_key=True, index=True)
@@ -619,6 +923,7 @@ def run_migrations():
                 ("safe_count", "ALTER TABLE audit_reports ADD COLUMN safe_count INTEGER DEFAULT 0;"),
                 ("warn_count", "ALTER TABLE audit_reports ADD COLUMN warn_count INTEGER DEFAULT 0;"),
                 ("danger_count", "ALTER TABLE audit_reports ADD COLUMN danger_count INTEGER DEFAULT 0;"),
+                ("cve_count", "ALTER TABLE audit_reports ADD COLUMN cve_count INTEGER DEFAULT 0;"),
             ]:
                 if col not in report_cols:
                     cursor.execute(sql)
@@ -688,8 +993,10 @@ def get_free_checks_left(user: Optional[User], request: Request) -> int:
     if user:
         used = user.free_checks_used or 0
         return max(0, FREE_CHECKS_LIMIT - used)
-    guest_count = int(request.cookies.get("guest_audit_count", 0))
-    return max(0, FREE_CHECKS_LIMIT - guest_count)
+    if request:
+        guest_count = int(request.cookies.get("guest_audit_count", 0))
+        return max(0, FREE_CHECKS_LIMIT - guest_count)
+    return FREE_CHECKS_LIMIT
 
 
 def hash_password(password: str) -> str:
@@ -737,6 +1044,55 @@ def _split_name_version(line: str) -> tuple:
     return line.strip(), "unknown"
 
 
+def _is_garbage_component(name: str) -> bool:
+    if not name:
+        return True
+    n = name.strip()
+    if len(n) < 2:
+        return True
+    if n.startswith('['):
+        return True
+    if "," in n and len(n.split(",")) > 1:
+        return True
+    lower = n.lower()
+    if lower.startswith(("author", "copyright", "company", "namespace", "project",
+                          "creator", "maintainer", "owner", "publisher")):
+        return True
+    if lower in ("name", "название", "компонент", "component"):
+        return True
+    if " " in n and all(w[0].isupper() for w in n.split() if w):
+        if not any(k in lower for k in ["visual", "studio", "code", "spring", "boot", "sql", "server",
+                                         "red", "hat", "sap", "ibm", "amazon", "microsoft", "google",
+                                         "apache", "oracle", "node", "docker", "kubernetes", "github",
+                                         "gitlab", "open", "source", "enterprise", "foundation"]):
+            return True
+    return False
+
+
+def _is_license_like(text: str) -> bool:
+    """Проверяет, похоже ли значение на название лицензии, а не на версию."""
+    if not text:
+        return False
+    t = str(text).strip().lower()
+    if not t or t == "unknown":
+        return False
+    license_markers = [
+        "mit", "apache", "bsd", "gpl", "lgpl", "mpl", "epl",
+        "isc", "cc0", "cc-by", "unlicense", "public domain",
+        "proprietary", "commercial", "eula", "sspl", "bsl",
+        "artistic", "cddl", "zlib", "wtfpl", "agpl",
+    ]
+    if t in license_markers:
+        return True
+    for m in license_markers:
+        if t.startswith(m) or t.endswith(m):
+            return True
+    # Если строка не содержит цифр — вряд ли это версия
+    if not any(c.isdigit() for c in t):
+        return True
+    return False
+
+
 def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
     extracted = []
     ext = filename.split(".")[-1].lower() if "." in filename else ""
@@ -750,7 +1106,7 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                     if row_vals:
                         name = row_vals[0]
                         ver = row_vals[1] if len(row_vals) > 1 else "unknown"
-                        if len(name) >= 2 and not name.lower().startswith(("компонент", "name", "название")):
+                        if not _is_garbage_component(name):
                             extracted.append({"name": name, "version": ver})
         elif ext == "docx":
             doc = docx.Document(io.BytesIO(file_bytes))
@@ -760,32 +1116,37 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                     if row_vals:
                         name = row_vals[0]
                         ver = row_vals[1] if len(row_vals) > 1 else "unknown"
-                        if len(name) >= 2:
+                        if not _is_garbage_component(name):
                             extracted.append({"name": name, "version": ver})
             for p in doc.paragraphs:
                 if p.text.strip():
                     parts = re.split(r'[\t:,]+', p.text.strip())
-                    if parts and len(parts[0]) >= 2:
+                    if parts and not _is_garbage_component(parts[0]):
                         extracted.append({"name": parts[0].strip(), "version": parts[1].strip() if len(parts) > 1 else "unknown"})
         elif ext == "json":
             data = json.loads(file_bytes.decode("utf-8", errors="ignore"))
             if "components" in data:
                 for comp in data.get("components", []):
-                    if comp.get("name"):
+                    if comp.get("name") and not _is_garbage_component(comp["name"]):
                         extracted.append({"name": comp["name"], "version": comp.get("version", "unknown")})
             elif "dependencies" in data:
                 for dep, ver in data.get("dependencies", {}).items():
-                    extracted.append({"name": dep, "version": str(ver)})
+                    if not _is_garbage_component(dep):
+                        extracted.append({"name": dep, "version": str(ver)})
         else:
             text = file_bytes.decode("utf-8", errors="ignore")
             for line in text.splitlines():
                 line = line.strip()
                 if line and not line.startswith("#"):
                     name, ver = _split_name_version(line)
-                    if len(name) >= 2:
+                    if not _is_garbage_component(name):
                         extracted.append({"name": name, "version": ver})
     except Exception as e:
         print(f"Parse error {filename}: {e}")
+    # Нормализация: если "версия" на самом деле лицензия — сбрасываем
+    for item in extracted:
+        if _is_license_like(item.get("version", "")):
+            item["version"] = "unknown"
     if not extracted:
         extracted = [{"name": filename.split(".")[0], "version": "1.0.0"}]
     return extracted
@@ -803,6 +1164,103 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
     if any(re.search(r'\b' + re.escape(k) + r'\b', search_clean) for k in ["cuda", "nvidia"]):
         return {"name": package_name, "version": table_version, "license": "NVIDIA Proprietary",
                 "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 Привязка к оборудованию вендора</small>"}
+
+    if "devexpress" in search_clean or "dev express" in search_clean:
+        return {"name": package_name, "version": table_version,
+                "license": "Commercial / DevExpress EULA",
+                "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 Экспортные ограничения. Замена: открытые UI-библиотеки</small>"}
+
+    # ============================================================
+    # ХАРДКОД: компоненты из таблицы Минцифры (100% надёжно)
+    # ============================================================
+
+    # DevExpress (все модули)
+    if "devexpress" in search_clean or "dev express" in search_clean or "devart" in search_clean:
+        return {"name": package_name, "version": table_version,
+                "license": "Commercial / DevExpress EULA",
+                "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 Экспортные ограничения. Замена: открытые UI-библиотеки</small>"}
+
+    # Запрещённые СУБД
+    banned_db = [
+        ("ibm db2", "IBM DB2"),
+        ("db2", "IBM DB2"),
+        ("intersystems", "InterSystems Caché"),
+        ("splunk", "Splunk"),
+        ("sap ase", "SAP ASE"),
+        ("sybase", "Sybase"),
+        ("sap sql anywhere", "SAP SQL Anywhere"),
+        ("sap hana", "SAP HANA"),
+        ("oracle nosql", "Oracle NoSQL"),
+        ("oracle mysql", "Oracle MySQL"),
+        ("oracle database", "Oracle Database"),
+    ]
+    for key, label in banned_db:
+        if key in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": "Commercial / Proprietary",
+                    "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}. Замена: Postgres Pro / MariaDB</small>"}
+
+    # Запрещённые серверы приложений
+    banned_app_servers = [
+        ("websphere", "IBM WebSphere"),
+        ("weblogic", "Oracle WebLogic"),
+        ("jboss", "Red Hat JBoss EAP"),
+        ("coldfusion", "Adobe ColdFusion"),
+        ("netweaver", "SAP NetWeaver"),
+        ("zend server", "RogueWave Zend Server"),
+    ]
+    for key, label in banned_app_servers:
+        if key in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": "Commercial / Proprietary",
+                    "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}. Замена: WildFly / TomEE</small>"}
+
+    # Запрещённые платформы
+    banned_platforms = [
+        ("filenet", "IBM FileNet"),
+        ("lotus domino", "IBM Lotus Domino"),
+        ("lotus notes", "IBM Lotus Notes"),
+    ]
+    for key, label in banned_platforms:
+        if key in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": "Commercial / Proprietary",
+                    "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}.</small>"}
+
+    # Запрещённые ОС
+    banned_os = [
+        ("redhat", "Red Hat Enterprise Linux"),
+        ("red hat", "Red Hat Enterprise Linux"),
+        ("suse linux", "SUSE Linux Enterprise"),
+        ("sles", "SUSE Linux Enterprise Server"),
+    ]
+    for key, label in banned_os:
+        if key in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": "Commercial / Proprietary",
+                    "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}. Замена: Astra Linux / ALT Linux</small>"}
+
+    # Разрешённые серверы приложений (open-source из таблицы Минцифры)
+    allowed_app_servers = [
+        ("wildfly", "WildFly", "LGPL-2.1"),
+        ("tomee", "Apache TomEE", "Apache-2.0"),
+        ("geronimo", "Apache Geronimo", "Apache-2.0"),
+        ("glassfish", "GlassFish", "CDDL / GPL"),
+        ("resin", "Resin", "GPL / Commercial"),
+    ]
+    for key, label, lic in allowed_app_servers:
+        if key in search_clean:
+            return {"name": package_name, "version": table_version,
+                    "license": lic,
+                    "status": f"✅ Разрешено <br><small style='color:#2f855a;'>💡 {label} — открытая лицензия</small>"}
+
+    # Разрешённые СУБД (open-source из таблицы Минцифры)
+    if "firebird" in search_clean:
+        return {"name": package_name, "version": table_version,
+                "license": "Interbase Public License",
+                "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 Firebird — открытая лицензия</small>"}
+
+    # ============================================================
 
     if any(re.search(r'\b' + re.escape(e) + r'\b', search_clean) for e in ["elasticsearch", "kibana", "logstash"]):
         return {"name": package_name, "version": table_version, "license": "SSPL / Elastic License",
@@ -852,7 +1310,7 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
     if "mongodb" in search_clean:
         return {"name": package_name, "version": table_version, "license": "SSPL",
                 "status": "⚠️ Требует внимания <br><small style='color:#dd6b20;'>💡 SSPL. Замена: PostgresPro</small>"}
-    if "redis" in search_clean:
+    if "redis" in search_clean and "valkey" not in search_clean:
         return {"name": package_name, "version": table_version,
                 "license": "RSALv2 / SSPL / BSD (до 7.2)",
                 "status": "⚠️ Требует внимания <br><small style='color:#dd6b20;'>💡 С 7.4 — SSPL/RSALv2. Замена: Valkey</small>"}
@@ -911,19 +1369,38 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
 def _build_verdict(report_data: list) -> dict:
     critical = [i for i in report_data if "❌ Запрещено" in str(i.get("status", ""))]
     warning = [i for i in report_data if "⚠️ Требует внимания" in str(i.get("status", ""))]
+
+    # Добавляем компоненты с уязвимостями в предупреждения
+    cve_items = [i for i in report_data if i.get("cve_count", 0) > 0]
+    for cve_item in cve_items:
+        if cve_item not in warning and cve_item not in critical:
+            warning.append(cve_item)
+
+    has_game_engine = any(
+        "unity" in str(i.get("name", "")).lower() or "unreal" in str(i.get("name", "")).lower()
+        for i in warning
+    )
+
     if critical:
         verdict = "❌ НЕ ПРОЙДЁТ РЕЕСТР"
         reason = f"Обнаружено {len(critical)} запрещённых компонент(ов), блокирующих включение в Единый реестр. Требуется обязательная замена."
     elif warning:
         verdict = "⚠️ МОЖЕТ ПРОЙТИ С ЗАМЕЧАНИЯМИ"
         reason = f"Обнаружено {len(warning)} компонент(ов), требующих внимания. Возможен отказ экспертного совета."
+        if cve_items:
+            total_cve = sum(i.get("cve_count", 0) for i in cve_items)
+            reason += f" ВНИМАНИЕ: Найдено {total_cve} уязвимостей в {len(cve_items)} компонент(ах). Рекомендуется обновление."
+        if has_game_engine:
+            reason += " Обнаружены компоненты Unity/Unreal Engine. Включение возможно только как временная мера (Письмо Минцифры от 21.08.2023 № АЗ-П11-4-200-216747)."
     else:
         verdict = "✅ СООТВЕТСТВУЕТ ТРЕБОВАНИЯМ"
-        reason = "Запрещённых компонентов не обнаружено. Продукт соответствует ПП РФ № 1236."
+        reason = "Запрещённых компонентов и уязвимостей не обнаружено. Продукт соответствует ПП РФ № 1236."
+
     return {"verdict": verdict, "reason": reason,
             "critical_count": len(critical), "warning_count": len(warning),
             "critical_list": [i.get("name", "") for i in critical][:20],
-            "warning_list": [i.get("name", "") for i in warning][:20]}
+            "warning_list": [i.get("name", "") for i in warning][:20],
+            "cve_total": sum(i.get("cve_count", 0) for i in cve_items)}
 
 
 async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, is_pro: bool, ai_provider: str = "auto"):
@@ -964,6 +1441,26 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                     db.commit()
                 return
             report_data = [r for r in results if isinstance(r, dict) and r is not None]
+            for r in report_data:
+                r["category"] = _detect_category(r.get("name", ""))
+                r.setdefault("cve_count", 0)
+                r.setdefault("cve_list", [])
+
+            # Проверка уязвимостей через OSV
+            try:
+                vuln_results = await check_osv_vulnerabilities(session, report_data)
+                for r in report_data:
+                    vulns = vuln_results.get(r.get("name", ""), {})
+                    r["cve_count"] = vulns.get("count", 0)
+                    r["cve_list"] = vulns.get("vulns", [])
+                    if r["cve_count"] > 0 and "❌" not in str(r.get("status", "")):
+                        has_critical = any(v.get("severity") in ("CRITICAL", "HIGH") for v in r.get("cve_list", []))
+                        if has_critical and "⚠️" not in str(r.get("status", "")):
+                            r["status"] = "⚠️ Требует внимания <br><small style='color:#e53e3e;'>🔒 " + str(r["cve_count"]) + " уязвимостей (CRITICAL/HIGH)</small>"
+                        else:
+                            r["status"] = r["status"] + f" <br><small style='color:#e53e3e;'>🔒 Найдено {r['cve_count']} уязвимостей</small>"
+            except Exception as e:
+                print(f"[OSV] Ошибка проверки уязвимостей: {e}")
 
         if not is_pro and total_parsed > FREE_COMPONENTS_LIMIT:
             hidden = total_parsed - FREE_COMPONENTS_LIMIT
@@ -971,7 +1468,10 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                 "name": f"⚠️ Скрыто ещё {hidden} компонентов",
                 "version": "???",
                 "license": "🔒 <a href='/pricing' style='color:#3182ce;font-weight:600;'>Перейти на Pro</a>",
-                "status": f"⚠️ Ограничено демо-режимом <br><small style='color:#dd6b20;'>💡 Показано {FREE_COMPONENTS_LIMIT} из {total_parsed}. <a href='/pricing' style='color:#3182ce;'>Подключить Pro →</a></small>"
+                "status": f"⚠️ Ограничено демо-режимом <br><small style='color:#dd6b20;'>💡 Показано {FREE_COMPONENTS_LIMIT} из {total_parsed}. <a href='/pricing' style='color:#3182ce;'>Подключить Pro →</a></small>",
+                "category": "Прочее",
+                "cve_count": 0,
+                "cve_list": [],
             })
 
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -985,6 +1485,7 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                          and "❌" not in str(i.get("status", "")))
         danger_count = sum(1 for i in report_data if "❌" in str(i.get("status", "")))
         warn_count = len(report_data) - safe_count - danger_count
+        cve_total = sum(i.get("cve_count", 0) for i in report_data)
         verdict_data = _build_verdict(report_data)
 
         rep = db.query(AuditReport).filter(AuditReport.id == report_id).first()
@@ -997,6 +1498,7 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
             rep.safe_count = safe_count
             rep.warn_count = warn_count
             rep.danger_count = danger_count
+            rep.cve_count = cve_total
             db.commit()
     except Exception as e:
         print(f"Audit error: {e}")
@@ -1023,6 +1525,9 @@ async def process_docker_scan_task(report_id: int, image_name: str):
             "version": image_name,
             "license": scan["os_status"],
             "status": f"{scan['os_status']} <br><small style='color:#4a5568;'>💡 {scan['os_recommendation']}</small>",
+            "category": "Операционные системы",
+            "cve_count": 0,
+            "cve_list": [],
         })
         for pkg in scan["packages"]:
             status_text = pkg["status"]
@@ -1033,9 +1538,25 @@ async def process_docker_scan_task(report_id: int, image_name: str):
                 "version": pkg["version"],
                 "license": "—",
                 "status": status_text,
+                "category": _detect_category(pkg["name"]),
+                "cve_count": 0,
+                "cve_list": [],
             })
 
         PROGRESS_TRACKER[report_id]["processed"] = 2
+
+        # Проверка уязвимостей для Docker-пакетов
+        try:
+            async with aiohttp.ClientSession() as osv_session:
+                vuln_results = await check_osv_vulnerabilities(osv_session, report_data)
+                for r in report_data:
+                    vulns = vuln_results.get(r.get("name", ""), {})
+                    r["cve_count"] = vulns.get("count", 0)
+                    r["cve_list"] = vulns.get("vulns", [])
+                    if r["cve_count"] > 0 and "❌" not in str(r.get("status", "")):
+                        r["status"] = r["status"] + f" <br><small style='color:#e53e3e;'>🔒 Найдено {r['cve_count']} уязвимостей</small>"
+        except Exception as e:
+            print(f"[OSV] Ошибка проверки уязвимостей (Docker): {e}")
 
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         clean_img = re.sub(r"[^\w\-_.]", "_", image_name)
@@ -1048,6 +1569,7 @@ async def process_docker_scan_task(report_id: int, image_name: str):
                          and "❌" not in str(i.get("status", "")))
         danger_count = sum(1 for i in report_data if "❌" in str(i.get("status", "")))
         warn_count = len(report_data) - safe_count - danger_count
+        cve_total = sum(i.get("cve_count", 0) for i in report_data)
         verdict_data = _build_verdict(report_data)
 
         rep = db.query(AuditReport).filter(AuditReport.id == report_id).first()
@@ -1060,6 +1582,7 @@ async def process_docker_scan_task(report_id: int, image_name: str):
             rep.safe_count = safe_count
             rep.warn_count = warn_count
             rep.danger_count = danger_count
+            rep.cve_count = cve_total
             db.commit()
     except Exception as e:
         print(f"Docker scan error: {e}")
@@ -1080,14 +1603,18 @@ def generate_excel_report(report_data: list, filename: str) -> str:
         df = pd.DataFrame([{
             "Компонент": re.sub(r"<[^<]+?>", "", str(i.get("name", ""))).strip(),
             "Версия": i.get("version", "unknown"),
+            "Категория": i.get("category", "Прочее"),
             "Лицензия": re.sub(r"<[^<]+?>", "", str(i.get("license", ""))),
             "Статус": re.sub(r"<[^<]+?>", "", str(i.get("status", ""))),
+            "CVE": ", ".join([v.get("cve", "") for v in i.get("cve_list", [])]) if i.get("cve_count", 0) > 0 else "—",
+            "Кол-во уязвимостей": i.get("cve_count", 0),
         } for i in report_data])
         df.to_excel(filepath, index=False, engine="openpyxl")
     except Exception as e:
         print(f"Excel error: {e}")
     return filepath
-    
+
+
 # ==========================================
 # HTML ШАБЛОНЫ
 # ==========================================
@@ -1105,6 +1632,49 @@ FOOTER_HTML = """
         <a href="/feedback" style="color:#3182ce;text-decoration:underline;margin: 0 10px;">📮 Обратная связь</a>
     </div>
 </footer>
+
+<button id="scrollTopBtn" onclick="scrollToTop()" title="Наверх" style="
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 999;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #3182ce;
+    color: white;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: opacity 0.3s, transform 0.3s;
+    line-height: 1;
+    padding: 0;
+">↑</button>
+
+<script>
+(function() {
+    var btn = document.getElementById('scrollTopBtn');
+    if (!btn) return;
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            btn.style.display = 'block';
+            setTimeout(function() { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }, 10);
+        } else {
+            btn.style.opacity = '0';
+            btn.style.transform = 'translateY(20px)';
+            setTimeout(function() { btn.style.display = 'none'; }, 300);
+        }
+    });
+    btn.addEventListener('mouseenter', function() { btn.style.background = '#2c5282'; });
+    btn.addEventListener('mouseleave', function() { btn.style.background = '#3182ce'; });
+})();
+
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
 """
 
 BETA_BANNER_HTML = """
@@ -1123,8 +1693,9 @@ STATUS_LEGEND_HTML = """
     <div style="margin-top: 12px; line-height: 1.6; border-top: 1px dashed #cbd5e0; padding-top: 10px;">
         <p><b style="color:#2f855a;">✅ Разрешено:</b> MIT, Apache-2.0, BSD, российское ПО из Реестра.</p>
         <p><b style="color:#2b6cb0;">ℹ️ Разрешено с условиями:</b> LGPL/MPL (динамическая линковка), Ubuntu.</p>
-        <p><b style="color:#dd6b20;">⚠️ Требует внимания:</b> Проприетарные библиотеки, OpenJDK, SSPL/RSALv2.</p>
+        <p><b style="color:#dd6b20;">⚠️ Требует внимания:</b> Проприетарные библиотеки, OpenJDK, SSPL/RSALv2, Unity/Unreal.</p>
         <p><b style="color:#e53e3e;">❌ Запрещено:</b> Иностранные ОС, CUDA, Elasticsearch, Google Cloud, AWS.</p>
+        <p><b style="color:#e53e3e;">🔒 Уязвимости:</b> Найденные CVE по данным OSV API.</p>
     </div>
 </details>
 """
@@ -1166,6 +1737,7 @@ GUIDELINES_HTML = """
         <li><b>Word / PDF:</b> Maven-координаты, списки с тире.</li>
         <li><b>Текстом:</b> по одной строке <code>имя==версия</code></li>
         <li><b>Docker:</b> укажите <code>image:tag</code></li>
+        <li><b>CVE:</b> автоматически проверяется через OSV API (только для компонентов с известной версией).</li>
     </ul>
 </div>
 """
@@ -1202,7 +1774,7 @@ def _build_nav(user: Optional[User]) -> str:
             f" | {feedback_link}")
 
 
-def _free_plan_banner(user: Optional[User], request: Request) -> str:
+def _free_plan_banner(user: Optional[User], request: Optional[Request]) -> str:
     if user and (user.role == "admin" or user.subscription_plan in ["Pro", "Unlimited"]):
         return ""
 
@@ -1233,7 +1805,7 @@ def _free_plan_banner(user: Optional[User], request: Request) -> str:
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "component-expert", "version": "8.7.0"}
+    return {"status": "ok", "service": "component-expert", "version": "9.0.0"}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -1495,7 +2067,9 @@ async def feedback_page(user: User = Depends(get_current_user)):
 <input type="text" name="name" required placeholder="Иван Иванов">
 
             <label>Email для ответа *</label>
-           <input type="email" name="email" required value="{user.email if user else ''}" placeholder="user@example.ru">
+           <
+           
+                      <input type="email" name="email" required value="{user.email if user else ''}" placeholder="user@example.ru">
 
             <label>Тема обращения</label>
             <select name="subject">
@@ -1693,7 +2267,7 @@ async def audit_progress_page(report_id: int):
     .card{{background:white;padding:45px;border-radius:8px;border-top:5px solid #3182ce;text-align:center;max-width:480px;}}</style>
     </head><body><div class="card">
     <h2>Идёт анализ ПО</h2>
-    <p>ИИ-агент проверяет зависимости...</p>
+    <p>ИИ-агент проверяет зависимости и уязвимости...</p>
     <div style="width:100%;background:#e2e8f0;border-radius:4px;height:8px;margin-top:25px;">
         <div id="pf" style="width:0%;height:100%;background:#3182ce;transition:width 0.4s;"></div>
     </div>
@@ -1736,14 +2310,25 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
     verdict_data = json.loads(rep.verdict_json) if rep.verdict_json else None
 
     rows = ""
+    categories_in_report = set()
     for item in report_data:
         st = str(item.get("status", ""))
         cls = "safe" if "Разрешено" in st else ("danger" if "Запрещено" in st else "warn")
-        rows += f"""<tr data-category='{cls}'>
-            <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'><b>{item.get('name')}</b><br><small style='color:#718096;'>(v.{item.get('version')})</small></td>
+        cat = item.get("category", "Прочее")
+        categories_in_report.add(cat)
+        cve_count = item.get("cve_count", 0)
+        cve_html = ""
+        if cve_count > 0:
+            cve_ids = ", ".join([v.get("cve", "") for v in item.get("cve_list", [])[:3]])
+            cve_html = f"<br><small style='color:#e53e3e;'>🔒 {cve_count} уязв.: {cve_ids}</small>"
+        rows += f"""<tr data-category='{cls}' data-type='{cat}'>
+            <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'><b>{item.get('name')}</b><br><small style='color:#718096;'>(v.{item.get('version')})</small>{cve_html}</td>
             <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'>{item.get('license')}</td>
             <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'><span class='{cls}'>{st}</span></td>
+            <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'><span style='background:#edf2f7;padding:3px 8px;border-radius:4px;font-size:12px;'>{cat}</span></td>
         </tr>"""
+
+    cat_options = "".join([f'<option value="{c}">{c}</option>' for c in sorted(categories_in_report)])
 
     verdict_html = ""
     if verdict_data:
@@ -1752,9 +2337,10 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
         bg = "#fff5f5" if "❌" in v else ("#fffaf0" if "⚠️" in v else "#f0fff4")
         crit = f'<p style="margin:10px 0 0 0;color:#c53030;font-size:13px;"><b>Запрещённые:</b> {", ".join(verdict_data["critical_list"])}</p>' if verdict_data.get("critical_list") else ""
         warn = f'<p style="margin:5px 0 0 0;color:#c05621;font-size:13px;"><b>Требуют внимания:</b> {", ".join(verdict_data["warning_list"])}</p>' if verdict_data.get("warning_list") else ""
+        cve_info = f'<p style="margin:5px 0 0 0;color:#e53e3e;font-size:13px;"><b>🔒 Уязвимости:</b> обнаружено {verdict_data.get("cve_total", 0)} CVE</p>' if verdict_data.get("cve_total", 0) > 0 else ""
         verdict_html = f"""<div style="background:{bg};border-left:6px solid {color};padding:20px 25px;border-radius:8px;margin-bottom:25px;">
             <h3 style="margin:0 0 8px 0;color:{color};font-size:18px;">ИТОГОВЫЙ ВЕРДИКТ: {v}</h3>
-            <p style="margin:0;color:#4a5568;font-size:14px;line-height:1.6;">{verdict_data["reason"]}</p>{crit}{warn}</div>"""
+            <p style="margin:0;color:#4a5568;font-size:14px;line-height:1.6;">{verdict_data["reason"]}</p>{crit}{warn}{cve_info}</div>"""
 
     total_rows = len(report_data)
 
@@ -1772,7 +2358,7 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
     return HTMLResponse(content=f"""
     <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Результаты аудита</title>
     <style>
-        body{{font-family:sans-serif;max-width:1050px;margin:40px auto;padding:20px;background:#f7fafc;color:#2d3748;}}
+        body{{font-family:sans-serif;max-width:1150px;margin:40px auto;padding:20px;background:#f7fafc;color:#2d3748;}}
         .card{{background:white;padding:35px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.05);border-top:4px solid #1a365d;margin-bottom:20px;}}
         .safe{{color:#2f855a;font-weight:bold;}}.danger{{color:#e53e3e;font-weight:bold;}}.warn{{color:#dd6b20;font-weight:bold;}}
         table{{width:100%;border-collapse:collapse;}}
@@ -1790,7 +2376,7 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
     </style></head><body>
     <div class="card">
         <h2 style="margin-top:0;">Результаты аудита: {rep.filename}</h2>
-        <p>Проанализировано компонентов: <b>{rep.total_count}</b></p>
+        <p>Проанализировано компонентов: <b>{rep.total_count}</b> | Найдено уязвимостей: <b style="color:#e53e3e;">{rep.cve_count or 0}</b></p>
         {verdict_html}
         {limit_notice}
         <div style="margin-bottom:20px;">
@@ -1806,7 +2392,11 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
             <button class="filter-btn" onclick="filterRows('danger', this)">❌ Запрещено ({rep.danger_count})</button>
             <button class="filter-btn" onclick="filterRows('warn', this)">⚠️ Требует внимания ({rep.warn_count})</button>
             <button class="filter-btn" onclick="filterRows('safe', this)">✅ Разрешено ({rep.safe_count})</button>
-            <input type="text" id="searchBox" class="search-box" placeholder="🔍 Поиск по имени..." oninput="searchTable()">
+            <input type="text" id="searchBox" class="search-box" placeholder="🔍 Поиск по имени..." oninput="applyFilters()">
+            <select id="categoryFilter" class="search-box" onchange="applyFilters()" style="width:220px;">
+                <option value="all">📂 Все категории</option>
+                {cat_options}
+            </select>
             <span id="counter" style="margin-left:auto;font-size:13px;color:#4a5568;">Показано: <b>{total_rows}</b> из {total_rows}</span>
         </div>
 
@@ -1816,6 +2406,7 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
                     <th onclick="sortTable(0)">Компонент <span class="sort-arrow"></span></th>
                     <th onclick="sortTable(1)">Лицензия <span class="sort-arrow"></span></th>
                     <th onclick="sortTable(2)">Статус <span class="sort-arrow"></span></th>
+                    <th onclick="sortTable(3)">Категория <span class="sort-arrow"></span></th>
                 </tr>
             </thead>
             <tbody>{rows}</tbody>
@@ -1824,63 +2415,62 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
     {FOOTER_HTML}
 
     <script>
-    let currentFilter = 'all';
-    let currentSort = {{col: -1, dir: 'asc'}};
+    var currentFilter = 'all';
+    var currentSort = {{col: -1, dir: 'asc'}};
 
     function applyFilters() {{
-        const searchVal = (document.getElementById('searchBox').value || '').toLowerCase().trim();
-        const rows = document.querySelectorAll('#resultsTable tbody tr');
-        let visible = 0;
-        rows.forEach(row => {{
-            const cat = row.getAttribute('data-category');
-            const nameText = row.cells[0].innerText.toLowerCase();
-            const matchFilter = (currentFilter === 'all' || cat === currentFilter);
-            const matchSearch = (!searchVal || nameText.includes(searchVal));
-            if (matchFilter && matchSearch) {{
+        var searchVal = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+        var catFilter = document.getElementById('categoryFilter').value;
+        var rows = document.querySelectorAll('#resultsTable tbody tr');
+        var visible = 0;
+        rows.forEach(function(row) {{
+            var statusCat = row.getAttribute('data-category');
+            var typeCat = row.getAttribute('data-type');
+            var nameText = row.cells[0].innerText.toLowerCase();
+            var matchStatus = (currentFilter === 'all' || statusCat === currentFilter);
+            var matchCategory = (catFilter === 'all' || typeCat === catFilter);
+            var matchSearch = (!searchVal || nameText.indexOf(searchVal) !== -1);
+            if (matchStatus && matchCategory && matchSearch) {{
                 row.style.display = '';
                 visible++;
             }} else {{
                 row.style.display = 'none';
             }}
         }});
-        document.getElementById('counter').innerHTML = `Показано: <b>${{visible}}</b> из {total_rows}`;
+        document.getElementById('counter').innerHTML = 'Показано: <b>' + visible + '</b> из {total_rows}';
     }}
 
     function filterRows(category, btn) {{
         currentFilter = category;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn').forEach(function(b) {{ b.classList.remove('active'); }});
         btn.classList.add('active');
         applyFilters();
     }}
 
-    function searchTable() {{
-        applyFilters();
-    }}
-
     function sortTable(col) {{
-        const table = document.getElementById('resultsTable');
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        const headers = table.querySelectorAll('th');
+        var table = document.getElementById('resultsTable');
+        var tbody = table.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        var headers = table.querySelectorAll('th');
 
-        let dir = 'asc';
+        var dir = 'asc';
         if (currentSort.col === col && currentSort.dir === 'asc') dir = 'desc';
         currentSort = {{col: col, dir: dir}};
 
-        headers.forEach((h, i) => {{
+        headers.forEach(function(h, i) {{
             h.classList.remove('sorted-asc', 'sorted-desc');
             if (i === col) h.classList.add(dir === 'asc' ? 'sorted-asc' : 'sorted-desc');
         }});
 
-        rows.sort((a, b) => {{
-            const aVal = a.cells[col].innerText.toLowerCase().trim();
-            const bVal = b.cells[col].innerText.toLowerCase().trim();
+        rows.sort(function(a, b) {{
+            var aVal = a.cells[col].innerText.toLowerCase().trim();
+            var bVal = b.cells[col].innerText.toLowerCase().trim();
             if (aVal < bVal) return dir === 'asc' ? -1 : 1;
             if (aVal > bVal) return dir === 'asc' ? 1 : -1;
             return 0;
         }});
 
-        rows.forEach(r => tbody.appendChild(r));
+        rows.forEach(function(r) {{ tbody.appendChild(r); }});
         applyFilters();
     }}
     </script>
@@ -1938,6 +2528,7 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         f"<tr><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.id}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.owner.email if r.owner else '—'}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.filename}</td>"
+        f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.cve_count or 0}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.created_at.strftime('%Y-%m-%d %H:%M')}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'><button onclick='delReport({r.id})' style='background:#e53e3e;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;'>Удалить</button></td></tr>"
         for r in all_reports
@@ -2003,7 +2594,7 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
 
     <div class="card" style="overflow-x:auto;">
     <h3 style="margin-top:0;">Все проверки ({len(all_reports)})</h3>
-    <table><tr><th>ID</th><th>Владелец</th><th>Файл</th><th>Дата</th><th>Действие</th></tr>{reports_html if reports_html else '<tr><td colspan="5" style="padding:20px;text-align:center;">Нет проверок</td></tr>'}</table>
+    <table><tr><th>ID</th><th>Владелец</th><th>Файл</th><th>CVE</th><th>Дата</th><th>Действие</th></tr>{reports_html if reports_html else '<tr><td colspan="6" style="padding:20px;text-align:center;">Нет проверок</td></tr>'}</table>
     </div>
 
     <div class="card">
@@ -2017,33 +2608,33 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
     {FOOTER_HTML}
     <script>
     async function changePlan(sel, uid) {{
-        const fd = new FormData();
+        var fd = new FormData();
         fd.append('user_id', uid); fd.append('plan', sel.value);
         await fetch('/admin/set-plan', {{method:'POST', body: fd}});
         location.reload();
     }}
     async function toggleBlock(uid, action) {{
-        const fd = new FormData();
+        var fd = new FormData();
         fd.append('user_id', uid); fd.append('action', action);
         await fetch('/admin/toggle-block', {{method:'POST', body: fd}});
         location.reload();
     }}
     async function resetPwd(uid, email) {{
         if (!confirm('Сбросить пароль для ' + email + '?')) return;
-        const fd = new FormData(); fd.append('user_id', uid);
-        const r = await fetch('/admin/reset-password', {{method:'POST', body: fd}});
-        const d = await r.json();
+        var fd = new FormData(); fd.append('user_id', uid);
+        var r = await fetch('/admin/reset-password', {{method:'POST', body: fd}});
+        var d = await r.json();
         alert('Новый пароль: ' + d.new_password);
     }}
     async function resetChecks(uid, email) {{
         if (!confirm('Сбросить счётчик проверок для ' + email + '?')) return;
-        const fd = new FormData(); fd.append('user_id', uid);
+        var fd = new FormData(); fd.append('user_id', uid);
         await fetch('/admin/reset-checks', {{method:'POST', body: fd}});
         location.reload();
     }}
     async function delUser(uid, email) {{
         if (!confirm('УДАЛИТЬ пользователя ' + email + '?')) return;
-        const fd = new FormData(); fd.append('user_id', uid);
+        var fd = new FormData(); fd.append('user_id', uid);
         await fetch('/admin/delete-user', {{method:'POST', body: fd}});
         location.reload();
     }}

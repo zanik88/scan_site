@@ -45,6 +45,8 @@ from sqlalchemy.orm import Session, declarative_base, relationship, sessionmaker
 
 load_dotenv()
 
+from version import __version__ as APP_VERSION, get_version_info
+
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./saas_audit.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key-change-in-production")
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
@@ -134,7 +136,7 @@ def _get_client_ip(request: Request) -> str:
 
 
 
-app = FastAPI(title="Платформа «Компонент-Эксперт» - ПП РФ № 1236", version="9.0.0")
+app = FastAPI(title="Платформа «Компонент-Эксперт» - ПП РФ № 1236", version=APP_VERSION)
 
 
 # ==========================================
@@ -2040,17 +2042,20 @@ async def log_visits(request: Request, call_next):
 
 def _build_nav(user: Optional[User]) -> str:
     feedback_link = "<a href='/feedback' style='color:#3182ce;text-decoration:none;font-weight:600;'>📮 Обратная связь</a>"
+    about_link = "<a href='/about' style='color:#3182ce;text-decoration:none;font-weight:600;'>ℹ️ О сервисе</a>"
     if user:
         admin_link = " | <a href='/admin' style='color:#e53e3e;font-weight:700;text-decoration:none;'>Панель администратора</a>" if user.role == "admin" else ""
         return (f"<span style='color:#2d3748;'>👤 <b>{user.email}</b> <span style='color:#718096;font-size:12px;'>({user.role})</span></span>"
                 f" | <a href='/dashboard' style='color:#3182ce;text-decoration:none;font-weight:600;'>Личный кабинет</a>"
                 f"{admin_link} | <a href='/pricing' style='color:#3182ce;text-decoration:none;font-weight:600;'>Тарифы</a>"
                 f" | {feedback_link}"
+                f" | {about_link}"
                 f" | <a href='/logout' style='color:#718096;text-decoration:none;'>Выйти</a>")
     return ("<a href='/login' style='color:#3182ce;text-decoration:none;font-weight:600;'>Вход</a>"
             " | <a href='/register' style='background:#3182ce;color:white;padding:6px 14px;border-radius:4px;text-decoration:none;font-weight:600;'>Регистрация</a>"
             " | <a href='/pricing' style='color:#3182ce;text-decoration:none;font-weight:600;'>Тарифы</a>"
-            f" | {feedback_link}")
+            f" | {feedback_link}"
+            f" | {about_link}")
 
 
 def _free_plan_banner(user: Optional[User], request: Optional[Request]) -> str:
@@ -2798,6 +2803,76 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
         applyFilters();
     }}
     </script>
+    </body></html>
+    """)
+
+
+@app.get("/about", response_class=HTMLResponse)
+async def about_page(user: User = Depends(get_current_user)):
+    info = get_version_info()
+    changelog_html = ""
+    for entry in info["changelog"]:
+        changes_li = "".join([f"<li>{c}</li>" for c in entry["changes"]])
+        changelog_html += f"""
+        <div style="border-left:4px solid #3182ce;padding:15px 20px;margin-bottom:20px;background:#f8fafc;border-radius:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                <h3 style="margin:0;color:#1a365d;font-size:22px;">v{entry['version']}</h3>
+                <span style="color:#718096;font-size:13px;">{entry['date']}</span>
+            </div>
+            <ul style="margin:0;padding-left:20px;font-size:14px;color:#2d3748;line-height:1.8;">
+                {changes_li}
+            </ul>
+        </div>"""
+
+    return HTMLResponse(content=f"""
+    <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>О сервисе</title>
+    <style>
+        body {{ font-family: -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f7fafc; color: #2d3748; }}
+        .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 14px; flex-wrap: wrap; gap: 10px; }}
+        .nav-brand {{ font-weight: 800; color: #1a365d; font-size: 16px; }}
+        .card {{ background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid #1a365d; margin-bottom: 20px; }}
+        h1 {{ color: #1a365d; margin-top: 0; }}
+        .version-badge {{ display: inline-block; background: #3182ce; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-left: 10px; }}
+        .tech {{ display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }}
+        .tech span {{ background: #edf2f7; padding: 4px 12px; border-radius: 12px; font-size: 13px; color: #2d3748; }}
+        a {{ color: #3182ce; }}
+    </style></head><body>
+    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div>{_build_nav(user)}</div></div>
+
+    <div class="card">
+        <h1>О сервисе <span class="version-badge">v{info['version']}</span></h1>
+        <p><b>Платформа «Компонент-Эксперт»</b> — веб-сервис автоматизированного аудита программного обеспечения на соответствие Постановлению Правительства РФ № 1236.</p>
+
+        <h3 style="color:#1a365d;margin-top:30px;">Дата сборки</h3>
+        <p style="font-size:14px;color:#4a5568;">{info['build_date']}</p>
+
+        <h3 style="color:#1a365d;margin-top:30px;">Технологии</h3>
+        <div class="tech">
+            <span>Python 3.12</span>
+            <span>FastAPI</span>
+            <span>SQLAlchemy 2.0</span>
+            <span>SQLite</span>
+            <span>GigaChat (OAuth 2.0)</span>
+            <span>OSV API</span>
+            <span>Docker</span>
+            <span>Nginx</span>
+        </div>
+
+        <h3 style="color:#1a365d;margin-top:30px;">Ссылки</h3>
+        <ul style="font-size:14px;line-height:1.8;">
+            <li><a href="https://github.com/zanik88/scan_site" target="_blank">GitHub-репозиторий</a></li>
+            <li><a href="https://reestr.digital.gov.ru/" target="_blank">Единый реестр российского ПО</a></li>
+            <li><a href="/terms">Пользовательское соглашение</a></li>
+            <li><a href="/feedback">Обратная связь</a></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h1 style="font-size:26px;">История версий</h1>
+        {changelog_html}
+    </div>
+
+    {FOOTER_HTML}
     </body></html>
     """)
 

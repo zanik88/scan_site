@@ -38,3 +38,9 @@ Thumbs.db
 
 # --- Логи ---
 *.log
+# Бэкапы патчей
+main.py.bak*
+*.bak
+*.bak2
+*.bak3
+*.bak4

@@ -2104,7 +2104,7 @@ def _free_plan_banner(user: Optional[User], request: Optional[Request]) -> str:
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "component-expert", "version": "9.0.0"}
+    return {"status": "ok", "service": "component-expert", "version": APP_VERSION}
 
 
 @app.get("/", response_class=HTMLResponse)

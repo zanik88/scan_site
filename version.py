@@ -9,10 +9,17 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.1.0"
+VERSION_FALLBACK = "9.1.1"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.1.1",
+        "date": "2026-09-26",
+        "changes": [
+            "Исправлен /health: версия берётся из APP_VERSION",
+        ]
+    },
     {
         "version": "9.1.0",
         "date": "2026-09-26",

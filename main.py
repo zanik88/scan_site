@@ -6,6 +6,10 @@ import os
 import re
 import secrets
 import sqlite3
+import time
+from collections import defaultdict
+import time
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -53,6 +57,79 @@ FREE_CHECKS_LIMIT = 5
 FREE_COMPONENTS_LIMIT = 10
 
 PROGRESS_TRACKER = {}
+
+# ==========================================
+# RATE LIMITING
+# ==========================================
+RATE_LIMIT_WINDOW = 60          # окно в секундах
+RATE_LIMIT_GUEST = 5            # для гостей и Free
+RATE_LIMIT_PRO = 30             # для Pro и Admin
+RATE_LIMIT_GENERAL = 120        # общий лимит для всех эндпоинтов
+
+# Хранилище: {(ip, endpoint): [timestamp1, timestamp2, ...]}
+_RATE_BUCKETS = defaultdict(list)
+
+
+def _get_client_ip(request: Request) -> str:
+    """Извлекает IP клиента с учётом Nginx reverse proxy."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        # X-Forwarded-For: client, proxy1, proxy2
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip", "")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
+
+
+def check_rate_limit(request: Request, endpoint: str, user=None) -> tuple:
+    """
+    Проверяет лимит запросов.
+    Возвращает (allowed: bool, remaining: int, retry_after: int).
+    """
+    ip = _get_client_ip(request)
+    key = (ip, endpoint)
+    now = time.time()
+
+    # Убираем старые timestamps
+    bucket = _RATE_BUCKETS[key]
+    _RATE_BUCKETS[key] = [t for t in bucket if now - t < RATE_LIMIT_WINDOW]
+    bucket = _RATE_BUCKETS[key]
+
+    # Определяем лимит по роли
+    if user and (user.role == "admin" or user.subscription_plan in ["Pro", "Unlimited"]):
+        limit = RATE_LIMIT_PRO
+    elif endpoint == "/upload":
+        limit = RATE_LIMIT_GUEST
+    else:
+        limit = RATE_LIMIT_GENERAL
+
+    if len(bucket) >= limit:
+        retry_after = int(RATE_LIMIT_WINDOW - (now - bucket[0])) + 1
+        return False, 0, retry_after
+
+    bucket.append(now)
+    return True, limit - len(bucket), 0
+
+
+# ==========================================
+# RATE LIMITING
+# ==========================================
+          
+
+def _get_client_ip(request: Request) -> str:
+    """Извлекает IP клиента с учётом Nginx reverse proxy."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        # X-Forwarded-For: client, proxy1, proxy2
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip", "")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
+
+
+
 
 app = FastAPI(title="Платформа «Компонент-Эксперт» - ПП РФ № 1236", version="9.0.0")
 
@@ -1914,6 +1991,33 @@ async def upload_file(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # --- RATE LIMITING ---
+    allowed, remaining, retry_after = check_rate_limit(request, "/upload", user)
+    if not allowed:
+        return HTMLResponse(
+            f"""<html><head><meta charset="UTF-8"><title>429 — Слишком много запросов</title>
+            <style>body{{font-family:sans-serif;text-align:center;padding:60px;background:#f7fafc;}}
+            .card{{background:white;max-width:520px;margin:0 auto;padding:40px;border-radius:8px;
+            border-top:5px solid #e53e3e;box-shadow:0 4px 12px rgba(0,0,0,0.05);}}
+            h1{{color:#e53e3e;}} p{{color:#4a5568;line-height:1.6;}}</style></head><body>
+            <div class="card">
+              <h1>⏱ Слишком много запросов</h1>
+              <p>Вы превысили лимит: <b>{RATE_LIMIT_GUEST} проверок в минуту</b> для бесплатного плана.</p>
+              <p>Подождите <b>{retry_after} секунд</b> и попробуйте снова.</p>
+              <p style="font-size:13px;">Для увеличения лимита перейдите на тариф Pro
+              (30 проверок в минуту).</p>
+              <p><a href="/pricing" style="color:#3182ce;font-weight:600;">Посмотреть тарифы →</a></p>
+              <p><a href="/" style="color:#718096;">← Вернуться на главную</a></p>
+            </div>
+            </body></html>""",
+            status_code=429,
+            headers={"Retry-After": str(retry_after)}
+        )
+    # --- /RATE LIMITING ---
+
+    # --- RATE LIMITING ---
+    # --- /RATE LIMITING ---
+
     free_left = get_free_checks_left(user, request)
     unlimited = is_unlimited(user)
 
@@ -1986,8 +2090,17 @@ async def register_page():
 
 
 @app.post("/register")
-async def register(company_name: str = Form(...), email: str = Form(...), password: str = Form(...),
+async def register(request: Request, company_name: str = Form(...), email: str = Form(...), password: str = Form(...),
                    terms_accepted: str = Form(None), db: Session = Depends(get_db)):
+    # --- RATE LIMITING ---
+    allowed, _, retry_after = check_rate_limit(request, "/register")
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Слишком много попыток регистрации. Подождите {retry_after} секунд.",
+            headers={"Retry-After": str(retry_after)}
+        )
+    # --- /RATE LIMITING ---
     if not terms_accepted:
         raise HTTPException(status_code=400, detail="Необходимо принять условия пользовательского соглашения")
     if db.query(User).filter(User.email == email).first():
@@ -2152,6 +2265,15 @@ async def feedback_submit(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # --- RATE LIMITING ---
+    allowed, _, retry_after = check_rate_limit(request, "/feedback")
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Слишком много обращений. Подождите {retry_after} секунд.",
+            headers={"Retry-After": str(retry_after)}
+        )
+    # --- /RATE LIMITING ---
     try:
         db.add(Feedback(
             name=name.strip()[:200],

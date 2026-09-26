@@ -544,6 +544,45 @@ DEFAULT_RULES = {
     "saltstack": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "SaltStack."},
     "vagrant": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "Vagrant — BUSL."},
     "packer": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "Packer — BUSL."},
+
+    # ============ AI/ML дополнительные ============
+    "vllm": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "vLLM — Apache-2.0."},
+    "llama.cpp": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "llama.cpp — MIT."},
+    "llamacpp": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "llama.cpp — MIT."},
+    "ollama": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Ollama — MIT."},
+    "jupyter": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "Jupyter — BSD-3-Clause."},
+    "jupyterlab": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "JupyterLab — BSD-3-Clause."},
+    "jupyter notebook": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "Jupyter Notebook."},
+    "tensorflow": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "TensorFlow — Apache-2.0."},
+    "mlflow": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "MLflow — Apache-2.0."},
+    "dvc": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "DVC — Apache-2.0."},
+    "ray": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Ray — Apache-2.0."},
+    "dask": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "Dask — BSD."},
+    "polars": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Polars — MIT."},
+    "lightgbm": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "LightGBM — MIT."},
+    "xgboost": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "XGBoost — Apache-2.0."},
+    "catboost": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "CatBoost — Apache-2.0."},
+    "stable diffusion": {"license": "OpenRAIL-M", "status": "⚠️ Требует внимания", "recommendation": "Stable Diffusion — OpenRAIL-M."},
+    "diffusers": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Hugging Face Diffusers."},
+
+    # ============ Python DevTools ============
+    "ruff": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Ruff — быстрый линтер, MIT."},
+    "uv": {"license": "Apache-2.0 / MIT", "status": "✅ Разрешено", "recommendation": "uv (astral-sh)."},
+    "pdm": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "PDM."},
+    "hatch": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Hatch."},
+    "pipx": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "pipx."},
+    "pre-commit": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "pre-commit."},
+    "bandit": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Bandit — security linter."},
+    "safety": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Safety."},
+
+    # ============ IaC / Policy ============
+    "open policy agent": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Open Policy Agent — Apache-2.0."},
+    "opa": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Open Policy Agent."},
+    "hashicorp boundary": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "HashiCorp Boundary — BUSL."},
+    "boundary": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "HashiCorp Boundary — BUSL."},
+    "consul": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "HashiCorp Consul — BUSL."},
+    "nomad": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "HashiCorp Nomad — BUSL."},
+    "pulumi": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Pulumi — Apache-2.0."},
 }
 
 
@@ -645,17 +684,25 @@ async def _call_gigachat(session: aiohttp.ClientSession, prompt: str) -> Optiona
         url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
         payload = {"model": "GigaChat", "messages": [{"role": "user", "content": prompt}], "temperature": 0.1}
-        async with session.post(url, headers=headers, json=payload, ssl=False,
-                                timeout=aiohttp.ClientTimeout(total=30)) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                parsed = _extract_json(data["choices"][0]["message"]["content"])
-                if parsed:
-                    parsed["provider"] = "GigaChat"
-                    return parsed
-            else:
-                err = await resp.text()
-                print(f"[AI] GigaChat chat ошибка: {resp.status} {err[:200]}")
+        # Retry при 429 (rate limit) — до 3 попыток
+        for attempt in range(3):
+            async with session.post(url, headers=headers, json=payload, ssl=False,
+                                    timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    parsed = _extract_json(data["choices"][0]["message"]["content"])
+                    if parsed:
+                        parsed["provider"] = "GigaChat"
+                        return parsed
+                elif resp.status == 429:
+                    wait = 2 + attempt * 2  # 2, 4, 6 сек
+                    print(f"[AI] GigaChat 429, ждём {wait}с (попытка {attempt+1}/3)")
+                    await asyncio.sleep(wait)
+                    continue
+                else:
+                    err = await resp.text()
+                    print(f"[AI] GigaChat chat ошибка: {resp.status} {err[:200]}")
+                    return None
     except Exception as e:
         print(f"[AI] GigaChat error: {e}")
     return None
@@ -1886,7 +1933,7 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                          "license_name": r.license_name, "status": r.status,
                          "recommendation": r.recommendation} for r in rules if r.component_key]
 
-        sem = asyncio.Semaphore(3)  # Ограничение для GigaChat (rate limit)
+        sem = asyncio.Semaphore(1)  # Только 1 ИИ-запрос одновременно (rate limit GigaChat)
 
         async def bounded(item):
             if PROGRESS_TRACKER.get(report_id, {}).get("cancel", False):
@@ -1896,6 +1943,8 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                     return None
                 res = await fetch_package_info_with_version(
                     session, item["name"], item["version"], cached_rules, report_id, ai_provider)
+                # Пауза 1.5 сек перед следующим ИИ-запросом
+                await asyncio.sleep(1.5)
                 if report_id in PROGRESS_TRACKER:
                     PROGRESS_TRACKER[report_id]["processed"] += 1
                 return res

@@ -9,10 +9,20 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.2.1"
+VERSION_FALLBACK = "9.2.2"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.2.2",
+        "date": "2026-09-26",
+        "changes": [
+            "Semaphore(1) — последовательные ИИ-запросы против rate limit GigaChat",
+            "Retry на 429 с паузами 2/4/6 сек",
+            "Пауза 1.5 сек между ИИ-запросами",
+            "Добавлено 35+ правил: vLLM, llama.cpp, JupyterLab, ruff, OPA, TensorFlow и др.",
+        ]
+    },
     {
         "version": "9.2.1",
         "date": "2026-09-26",

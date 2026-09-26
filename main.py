@@ -53,6 +53,9 @@ YANDEX_GPT_API_KEY = os.getenv("YANDEX_GPT_API_KEY", "")
 YANDEX_FOLDER_ID = os.getenv("YANDEX_FOLDER_ID", "")
 GIGACHAT_API_KEY = os.getenv("GIGACHAT_API_KEY", "")
 
+# Кэш access_token для GigaChat
+_GIGACHAT_TOKEN_CACHE = {"token": None, "expires_at": 0}
+
 FREE_CHECKS_LIMIT = 5
 FREE_COMPONENTS_LIMIT = 10
 
@@ -483,26 +486,164 @@ async def _call_yandex(session: aiohttp.ClientSession, prompt: str) -> Optional[
     return None
 
 
+async def _get_gigachat_token(session: aiohttp.ClientSession) -> Optional[str]:
+    """Обменивает Authorization Key на access_token (OAuth)."""
+    now = time.time()
+    if _GIGACHAT_TOKEN_CACHE["token"] and now < _GIGACHAT_TOKEN_CACHE["expires_at"] - 60:
+        return _GIGACHAT_TOKEN_CACHE["token"]
+
+    if not GIGACHAT_API_KEY:
+        return None
+
+    try:
+        import uuid
+        url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+        headers = {
+            "Authorization": f"Basic {GIGACHAT_API_KEY}",
+            "RqUID": str(uuid.uuid4()),
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+        }
+        data = {"scope": "GIGACHAT_API_PERS"}
+        async with session.post(url, headers=headers, data=data, ssl=False,
+                                timeout=aiohttp.ClientTimeout(total=15)) as resp:
+            if resp.status == 200:
+                result = await resp.json()
+                token = result.get("access_token")
+                expires = result.get("expires_at", 0) / 1000  # мс → сек
+                _GIGACHAT_TOKEN_CACHE["token"] = token
+                _GIGACHAT_TOKEN_CACHE["expires_at"] = expires
+                print(f"[AI] GigaChat: получен новый токен (до {datetime.fromtimestamp(expires).strftime('%H:%M:%S')})")
+                return token
+            else:
+                err = await resp.text()
+                print(f"[AI] GigaChat OAuth ошибка: {resp.status} {err[:200]}")
+    except Exception as e:
+        print(f"[AI] GigaChat OAuth исключение: {e}")
+    return None
+
+
 async def _call_gigachat(session: aiohttp.ClientSession, prompt: str) -> Optional[dict]:
     if not GIGACHAT_API_KEY:
         return None
     try:
+        token = await _get_gigachat_token(session)
+        if not token:
+            return None
         url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {GIGACHAT_API_KEY}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
         payload = {"model": "GigaChat", "messages": [{"role": "user", "content": prompt}], "temperature": 0.1}
-        async with session.post(url, headers=headers, json=payload, ssl=False, timeout=aiohttp.ClientTimeout(total=20)) as resp:
+        async with session.post(url, headers=headers, json=payload, ssl=False,
+                                timeout=aiohttp.ClientTimeout(total=30)) as resp:
             if resp.status == 200:
                 data = await resp.json()
                 parsed = _extract_json(data["choices"][0]["message"]["content"])
                 if parsed:
                     parsed["provider"] = "GigaChat"
                     return parsed
+            else:
+                err = await resp.text()
+                print(f"[AI] GigaChat chat ошибка: {resp.status} {err[:200]}")
     except Exception as e:
         print(f"[AI] GigaChat error: {e}")
     return None
 
 
+async def _get_ai_cache(component_name: str):
+    """Получает запись из кэша ИИ-ответов. Возвращает (license, status, rec, provider) или None."""
+    def query():
+        db = SessionLocal()
+        try:
+            key = (component_name or "").lower().strip()
+            if not key:
+                return None
+            now = datetime.utcnow()
+            cache = db.query(AILicenseCache).filter(AILicenseCache.component_name == key).first()
+            if not cache:
+                return None
+            ttl_days = 7 if cache.is_failure else 90
+            age_days = (now - cache.created_at).days if cache.created_at else 0
+            if age_days > ttl_days:
+                db.delete(cache)
+                db.commit()
+                return None
+            cache.hit_count = (cache.hit_count or 0) + 1
+            cache.last_used = now
+            db.commit()
+            return (cache.license, cache.status, cache.recommendation or "", cache.provider or "")
+        except Exception as e:
+            print(f"[AI CACHE] Ошибка чтения: {e}")
+            return None
+        finally:
+            db.close()
+    return await asyncio.to_thread(query)
+
+
+async def _save_ai_cache(component_name, license_, status, recommendation, provider, is_failure=False):
+    """Сохраняет ответ ИИ в кэш."""
+    def save():
+        db = SessionLocal()
+        try:
+            key = (component_name or "").lower().strip()
+            if not key:
+                return
+            existing = db.query(AILicenseCache).filter(AILicenseCache.component_name == key).first()
+            if existing:
+                existing.license = license_
+                existing.status = status
+                existing.recommendation = recommendation
+                existing.provider = provider
+                existing.is_failure = is_failure
+                existing.created_at = datetime.utcnow()
+            else:
+                db.add(AILicenseCache(
+                    component_name=key,
+                    license=license_,
+                    status=status,
+                    recommendation=recommendation,
+                    provider=provider,
+                    is_failure=is_failure,
+                ))
+            db.commit()
+        except Exception as e:
+            print(f"[AI CACHE] Ошибка записи: {e}")
+            db.rollback()
+        finally:
+            db.close()
+    await asyncio.to_thread(save)
+
+
+def cleanup_ai_cache():
+    """Удаляет устаревшие записи кэша ИИ."""
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        old_success = db.query(AILicenseCache).filter(
+            AILicenseCache.is_failure == False,
+            AILicenseCache.created_at < now - timedelta(days=90)
+        ).delete()
+        old_failure = db.query(AILicenseCache).filter(
+            AILicenseCache.is_failure == True,
+            AILicenseCache.created_at < now - timedelta(days=7)
+        ).delete()
+        db.commit()
+        if old_success or old_failure:
+            print(f"[AI CACHE] Очищено: {old_success} успешных, {old_failure} неудачных")
+    except Exception as e:
+        print(f"[AI CACHE] Ошибка очистки: {e}")
+    finally:
+        db.close()
+
+
 async def ask_ai_for_license(component_name: str, provider: str = "auto") -> tuple:
+    # --- Проверка кэша ---
+    cached = await _get_ai_cache(component_name)
+    if cached:
+        lic, st, rec, prov = cached
+        print(f"[AI CACHE] ✅ Хит для '{component_name}': {lic}")
+        cache_note = f" (из кэша: {prov})" if prov else " (из кэша)"
+        return (lic, st, rec + cache_note)
+
     prompt = AI_PROMPT_TEMPLATE.format(component=component_name)
     if provider == "auto":
         chain = ["yandex", "gigachat"]
@@ -526,10 +667,15 @@ async def ask_ai_for_license(component_name: str, provider: str = "auto") -> tup
                 analog = result.get("registry_analog", "")
                 if analog:
                     rec += f" Российский аналог: {analog}."
-                return (result["license"], result.get("status", "⚠️ Требует внимания"), f"{rec} (ИИ: {result['provider']})")
+                final_rec = f"{rec} (ИИ: {result['provider']})"
+                final_status = result.get("status", "⚠️ Требует внимания")
+                await _save_ai_cache(component_name, result["license"], final_status, final_rec, result["provider"], is_failure=False)
+                return (result["license"], final_status, final_rec)
 
     print(f"[AI] ❌ Все ИИ недоступны для '{component_name}'.")
-    return ("Не определена", "⚠️ Требует внимания", f"Не удалось определить лицензию для '{component_name}'. Требуется ручная проверка.")
+    fail_msg = f"Не удалось определить лицензию для '{component_name}'. Требуется ручная проверка."
+    await _save_ai_cache(component_name, "Не определена", "⚠️ Требует внимания", fail_msg, None, is_failure=True)
+    return ("Не определена", "⚠️ Требует внимания", fail_msg)
 
 
 # ==========================================
@@ -972,6 +1118,20 @@ class Feedback(Base):
     page_url = Column(String, nullable=True)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AILicenseCache(Base):
+    __tablename__ = "ai_license_cache"
+    id = Column(Integer, primary_key=True, index=True)
+    component_name = Column(String, unique=True, index=True, nullable=False)
+    license = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    recommendation = Column(Text, nullable=True)
+    provider = Column(String, nullable=True)
+    is_failure = Column(Boolean, default=False)
+    hit_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_used = Column(DateTime, default=datetime.utcnow)
 
 
 Base.metadata.create_all(bind=engine)

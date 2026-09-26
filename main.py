@@ -465,6 +465,20 @@ DEFAULT_RULES = {
     "dotnet": {"license": "MIT", "status": "✅ Разрешено", "recommendation": ".NET — MIT."},
     ".net": {"license": "MIT", "status": "✅ Разрешено", "recommendation": ".NET."},
     ".net sdk": {"license": "MIT", "status": "✅ Разрешено", "recommendation": ".NET SDK."},
+    "dotnet sdk": {"license": "MIT", "status": "✅ Разрешено", "recommendation": ".NET SDK."},
+    "elastic beats": {"license": "Elastic License 2.0", "status": "❌ Запрещено", "recommendation": "Elastic Beats — Elastic License. Замена: Fluent Bit."},
+    "filebeat": {"license": "Elastic License 2.0", "status": "❌ Запрещено", "recommendation": "Filebeat (Elastic) — Замена: Fluent Bit."},
+    "metricbeat": {"license": "Elastic License 2.0", "status": "❌ Запрещено", "recommendation": "Metricbeat (Elastic) — Замена: Prometheus."},
+    "packetbeat": {"license": "Elastic License 2.0", "status": "❌ Запрещено", "recommendation": "Packetbeat (Elastic)."},
+    "heartbeat": {"license": "Elastic License 2.0", "status": "❌ Запрещено", "recommendation": "Heartbeat (Elastic)."},
+    "auditbeat": {"license": "Elastic License 2.0", "status": "❌ Запрещено", "recommendation": "Auditbeat (Elastic)."},
+    "fluent bit": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Fluent Bit."},
+    "fluentbit": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Fluent Bit."},
+    "fluent-bit": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Fluent Bit."},
+    "fluentd": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Fluentd."},
+    "jaeger": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Jaeger — трассировка."},
+    "zipkin": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Zipkin."},
+    "tempo": {"license": "AGPL-3.0", "status": "⚠️ Требует внимания", "recommendation": "Grafana Tempo — AGPL."},
     "erlang": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Erlang/OTP."},
     "elixir": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Elixir."},
     "kotlin": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Kotlin."},
@@ -780,6 +794,43 @@ async def ask_ai_for_license(component_name: str, provider: str = "auto") -> tup
 # ==========================================
 # ОПРЕДЕЛЕНИЕ КАТЕГОРИЙ
 # ==========================================
+def _category_badge(cat: str) -> str:
+    """Возвращает HTML-бейдж для категории с фиксированным цветом."""
+    colors = {
+        "Операционные системы": "#e53e3e",
+        "СУБД и хранилища": "#dd6b20",
+        "Языки и рантаймы": "#3182ce",
+        "Фреймворки": "#805ad5",
+        "Библиотеки": "#38a169",
+        "Мониторинг и логирование": "#319795",
+        "Очереди сообщений": "#5a67d8",
+        "Контейнеризация и оркестрация": "#00b5d8",
+        "Облачные сервисы": "#0ea5e9",
+        "Игровые движки": "#ed64a6",
+        "ИИ и ML": "#d53f8c",
+        "Инструменты разработки": "#718096",
+        "IDE и редакторы": "#2c5282",
+        "Системные библиотеки": "#4a5568",
+        "Прочее": "#a0aec0",
+    }
+    color = colors.get(cat, "#a0aec0")
+    # Короткие метки для длинных категорий
+    short = {
+        "Мониторинг и логирование": "Мониторинг",
+        "Контейнеризация и оркестрация": "Контейнеры",
+        "Инструменты разработки": "Инструменты",
+        "Операционные системы": "ОС",
+        "СУБД и хранилища": "СУБД",
+        "Языки и рантаймы": "Языки",
+        "Игровые движки": "Геймдев",
+        "Очереди сообщений": "Очереди",
+        "Облачные сервисы": "Облако",
+        "IDE и редакторы": "IDE",
+    }
+    label = short.get(cat, cat)
+    return f'<span style="display:inline-block;background:{color};color:white;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;min-width:80px;text-align:center;">{label}</span>'
+
+
 def _detect_category(name: str) -> str:
     n = (name or "").lower().strip()
     if not n:
@@ -1537,6 +1588,30 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         return {"name": package_name, "version": table_version,
                 "license": "Commercial / DevExpress EULA",
                 "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 Экспортные ограничения. Замена: открытые UI-библиотеки</small>"}
+
+    # .NET SDK (с версией в названии)
+    if ".net sdk" in search_clean or "dotnet sdk" in search_clean or search_clean.startswith(".net "):
+        return {"name": package_name, "version": table_version,
+                "license": "MIT",
+                "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 .NET SDK — MIT</small>"}
+
+    # Elastic Beats (Filebeat, Metricbeat и др.) — запрещены
+    if "filebeat" in search_clean or "metricbeat" in search_clean or "packetbeat" in search_clean or "auditbeat" in search_clean or "elastic beats" in search_clean:
+        return {"name": package_name, "version": table_version,
+                "license": "Elastic License 2.0",
+                "status": "❌ Запрещено <br><small style='color:#e53e3e;'>💡 Elastic License. Замена: Fluent Bit / OpenSearch</small>"}
+
+    # Fluent Bit / Fluentd
+    if "fluent bit" in search_clean or "fluentbit" in search_clean or "fluent-bit" in search_clean or "fluentd" in search_clean:
+        return {"name": package_name, "version": table_version,
+                "license": "Apache-2.0",
+                "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 Fluent Bit / Fluentd — Apache-2.0</small>"}
+
+    # Jaeger
+    if "jaeger" in search_clean:
+        return {"name": package_name, "version": table_version,
+                "license": "Apache-2.0",
+                "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 Jaeger — Apache-2.0</small>"}
 
     # Oracle MySQL — различаем Community (разрешено) и Commercial (запрещено)
     if "mysql" in search_clean:
@@ -2766,7 +2841,7 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
             <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'><b>{item.get('name')}</b><br><small style='color:#718096;'>(v.{item.get('version')})</small>{cve_html}</td>
             <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'>{item.get('license')}</td>
             <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'><span class='{cls}'>{st}</span></td>
-            <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;'><span style='background:#edf2f7;padding:3px 8px;border-radius:4px;font-size:12px;'>{cat}</span></td>
+            <td style='padding:12px;border-bottom:1px solid #e2e8f0;word-break:break-word;text-align:center;width:120px;'>{_category_badge(cat)}</td>
         </tr>"""
 
     cat_options = "".join([f'<option value="{c}">{c}</option>' for c in sorted(categories_in_report)])
@@ -2847,7 +2922,7 @@ async def audit_result_page(report_id: int, user: User = Depends(get_current_use
                     <th onclick="sortTable(0)">Компонент <span class="sort-arrow"></span></th>
                     <th onclick="sortTable(1)">Лицензия <span class="sort-arrow"></span></th>
                     <th onclick="sortTable(2)">Статус <span class="sort-arrow"></span></th>
-                    <th onclick="sortTable(3)">Категория <span class="sort-arrow"></span></th>
+                    <th onclick="sortTable(3)" style="text-align:center;width:120px;">Категория <span class="sort-arrow"></span></th>
                 </tr>
             </thead>
             <tbody>{rows}</tbody>

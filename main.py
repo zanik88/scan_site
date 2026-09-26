@@ -563,9 +563,10 @@ async def _get_ai_cache(component_name: str):
             cache = db.query(AILicenseCache).filter(AILicenseCache.component_name == key).first()
             if not cache:
                 return None
-            ttl_days = 7 if cache.is_failure else 90
-            age_days = (now - cache.created_at).days if cache.created_at else 0
-            if age_days > ttl_days:
+            # TTL: 1 час для неудачных, 90 дней для успешных
+            ttl_seconds = 3600 if cache.is_failure else 90 * 86400
+            age_seconds = (now - cache.created_at).total_seconds() if cache.created_at else 0
+            if age_seconds > ttl_seconds:
                 db.delete(cache)
                 db.commit()
                 return None
@@ -626,7 +627,7 @@ def cleanup_ai_cache():
         ).delete()
         old_failure = db.query(AILicenseCache).filter(
             AILicenseCache.is_failure == True,
-            AILicenseCache.created_at < now - timedelta(days=7)
+            AILicenseCache.created_at < now - timedelta(hours=1)
         ).delete()
         db.commit()
         if old_success or old_failure:
@@ -3031,7 +3032,7 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
 
     <div class="card" style="border-top-color:#38a169;">
     <h3 style="margin-top:0;">🧠 Кэш ИИ-ответов</h3>
-    <p style="font-size:13px;color:#4a5568;">Кэш хранит ответы GigaChat на 90 дней (или 7 дней для неудачных запросов). При повторной проверке того же компонента ИИ не вызывается — экономится время и деньги.</p>
+    <p style="font-size:13px;color:#4a5568;">Кэш хранит ответы GigaChat на 90 дней (или 1 час для неудачных запросов). При повторной проверке того же компонента ИИ не вызывается — экономится время и деньги.</p>
     <div style="display:flex;gap:20px;flex-wrap:wrap;margin:20px 0;">
         <div style="flex:1;min-width:180px;background:#f0fff4;padding:18px 22px;border-radius:6px;border-left:4px solid #38a169;">
             <div style="color:#4a5568;font-size:12px;">Всего записей</div>

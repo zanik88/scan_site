@@ -1986,8 +1986,7 @@ FILE_UPLOAD_HTML = """
     <div style="margin-bottom: 20px;">
         <label style="font-size: 13px; font-weight: 600; color: #4a5568;">🧠 ИИ-анализ:</label>
         <select name="ai_provider" style="padding: 7px 14px; border-radius: 4px; border: 1px solid #cbd5e0;">
-            <option value="auto" selected>🔀 Авто (YandexGPT → GigaChat → база)</option>
-            <option value="yandex">YandexGPT</option>
+            <option value="auto" selected>🔀 Авто (GigaChat → база)</option>
             <option value="gigachat">GigaChat (Сбер)</option>
         </select>
     </div>
@@ -2338,7 +2337,7 @@ async def terms_page():
     <h2>3. Обработка персональных данных</h2>
     <p>3.1. Загружаемые файлы манифестов обрабатываются автоматически в памяти Сервиса с целью формирования аналитического отчёта.</p>
     <p>3.2. Сервис не передаёт загруженные документы третьим лицам.</p>
-    <p>3.3. При обращении к внешним ИИ-провайдерам (YandexGPT, GigaChat) передаётся только название компонента, без содержимого файла.</p>
+    <p>3.3. При обращении к внешним ИИ-провайдерам (GigaChat) передаётся только название компонента, без содержимого файла.</p>
     <p>3.4. При регистрации пользователь даёт согласие на обработку персональных данных (email, название организации) в целях предоставления доступа к Сервису.</p>
 
     <h2>4. Тарифы и лимиты</h2>

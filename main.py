@@ -693,12 +693,27 @@ def _detect_category(name: str) -> str:
     def _has_word(text, word):
         return re.search(r'\b' + re.escape(word) + r'\b', text) is not None
 
-    # СУБД и хранилища (первым делом — во избежание ложных срабатываний)
+    # Очереди сообщений и брокеры (ДО СУБД, чтобы Kafka/RabbitMQ попали сюда)
+    mq_keys = ["kafka", "rabbitmq", "activemq", "artemis", "nats", "zeromq", "pulsar",
+               "rocketmq", "ibm mq", "rabbit", "qpid", "emqx", "mosquitto"]
+    if any(_has_word(n, k) for k in mq_keys) or "activemq artemis" in n:
+        return "Очереди сообщений"
+
+    # Мониторинг и логирование
+    monitor_keys = ["zabbix", "prometheus", "grafana", "nagios", "datadog",
+                    "new relic", "splunk", "elasticsearch", "kibana", "logstash",
+                    "opensearch", "graylog", "loki", "jaeger", "zipkin", "tempo",
+                    "opentelemetry", "otel", "sentry", "victoriametrics",
+                    "influxdb", "telegraf", "fluentd", "fluentbit", "fluent-bit",
+                    "filebeat", "metricbeat", "logstash", "vector"]
+    if any(_has_word(n, k) for k in monitor_keys):
+        return "Мониторинг и логирование"
+
+    # СУБД и хранилища (после очередей и мониторинга)
     db_keys = ["postgres", "mysql", "mariadb", "oracle", "sql server", "sqlite", "mongodb",
                "redis", "valkey", "clickhouse", "cassandra", "scylladb", "couchdb", "neo4j",
-               "elasticsearch", "opensearch", "kafka", "rabbitmq", "zookeeper", "influxdb",
-               "sap hana", "enterprisedb", "npgsql", "db2", "teradata", "firebird", "hive",
-               "tibero", "tmax"]
+               "zookeeper", "sap hana", "enterprisedb", "npgsql", "db2", "teradata",
+               "firebird", "hive", "tibero", "tmax"]
     if any(_has_word(n, k) for k in db_keys):
         return "СУБД и хранилища"
 

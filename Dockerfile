@@ -11,10 +11,11 @@ WORKDIR /app
 #   - fonts-dejavu-core: для кириллицы в PDF (если будешь делать PDF)
 #   - docker.io: клиент Docker для сканера образов
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        gcc \
-        libpq-dev \
-        fonts-dejavu-core \
-        docker.io \
+    gcc \
+    libpq-dev \
+    fonts-dejavu-core \
+    docker.io \
+    docker-cli \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

@@ -9,10 +9,17 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.2.2"
+VERSION_FALLBACK = "9.2.3"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.2.3",
+        "date": "2026-09-26",
+        "changes": [
+            "Docker-сканер временно убран из UI (вернём при развитии сервиса)",
+        ]
+    },
     {
         "version": "9.2.2",
         "date": "2026-09-26",

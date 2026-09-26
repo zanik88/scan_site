@@ -2220,7 +2220,7 @@ STATUS_LEGEND_HTML = """
 
 FILE_UPLOAD_HTML = """
 <div class="upload-box" style="background: #f8fafc; border: 2px dashed #cbd5e0; padding: 25px; border-radius: 6px; margin: 25px 0; text-align: center;">
-    <h3 style="color: #1a365d; margin-top: 0;">📂 Загрузите файл, вставьте список или укажите Docker-образ</h3>
+    <h3 style="color: #1a365d; margin-top: 0;">📂 Загрузите файл или вставьте список компонентов</h3>
     <div style="margin-bottom: 20px;">
         <label style="font-size: 13px; font-weight: 600; color: #4a5568;">🧠 ИИ-анализ:</label>
         <select name="ai_provider" style="padding: 7px 14px; border-radius: 4px; border: 1px solid #cbd5e0;">
@@ -2238,11 +2238,7 @@ FILE_UPLOAD_HTML = """
             <textarea name="text_input" maxlength="500" placeholder="fastapi==0.115.6&#10;pandas==2.2.3" style="width: 100%; min-height: 80px; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-family: monospace;"></textarea>
         </div>
     </div>
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #cbd5e0;">
-        <h4 style="margin: 0 0 10px 0; color: #2d3748; font-size: 14px;">🐳 Способ 3: Сканировать Docker-образ</h4>
-        <input type="text" name="docker_image" placeholder="ubuntu:22.04 / python:3.12-slim / node:20-alpine" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-family: monospace;">
-        <div style="font-size: 11px; color: #718096; margin-top: 5px;">Система поднимет контейнер, определит базовую ОС и проверит пакеты.</div>
-    </div>
+    <!-- Docker-сканер временно отключён. Вернём после доработки. -->
 </div>
 """
 
@@ -2253,7 +2249,6 @@ GUIDELINES_HTML = """
         <li><b>SBOM (CycloneDX/SPDX):</b> <code>.cdx.json</code>, <code>.spdx.json</code>, <code>package.json</code></li>
         <li><b>Word / PDF:</b> Maven-координаты, списки с тире.</li>
         <li><b>Текстом:</b> по одной строке <code>имя==версия</code></li>
-        <li><b>Docker:</b> укажите <code>image:tag</code></li>
         <li><b>CVE:</b> автоматически проверяется через OSV API (только для компонентов с известной версией).</li>
     </ul>
 </div>

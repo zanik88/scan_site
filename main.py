@@ -1955,8 +1955,9 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
             if PROGRESS_TRACKER.get(report_id, {}).get("cancel", False):
                 rep = db.query(AuditReport).filter(AuditReport.id == report_id).first()
                 if rep:
-                    db.delete(rep)
+                    rep.status = "cancelled"
                     db.commit()
+                    print(f"[CANCEL] Отчёт #{report_id} помечен как cancelled")
                 return
             report_data = [r for r in results if isinstance(r, dict) and r is not None]
             for r in report_data:
@@ -2823,18 +2824,41 @@ async def delete_report(report_id: int, user: User = Depends(get_current_user), 
 async def audit_progress_page(report_id: int):
     return HTMLResponse(content=f"""
     <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Анализ...</title>
-    <style>body{{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f7fafc;}}
-    .card{{background:white;padding:45px;border-radius:8px;border-top:5px solid #3182ce;text-align:center;max-width:480px;}}</style>
+    <style>
+        body{{font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f7fafc;}}
+        .card{{background:white;padding:45px;border-radius:8px;border-top:5px solid #3182ce;text-align:center;max-width:520px;box-shadow:0 4px 12px rgba(0,0,0,0.05);}}
+        .cancel-btn{{background:#e53e3e;color:white;border:none;padding:10px 24px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;margin-top:25px;transition:background 0.2s;}}
+        .cancel-btn:hover{{background:#c53030;}}
+        .cancel-btn:disabled{{background:#cbd5e0;cursor:not-allowed;}}
+    </style>
     </head><body><div class="card">
-    <h2>Идёт анализ ПО</h2>
-    <p>ИИ-агент проверяет зависимости и уязвимости...</p>
+    <h2 style="color:#1a365d;margin-top:0;">Идёт анализ ПО</h2>
+    <p style="color:#4a5568;">ИИ-агент проверяет зависимости и уязвимости...</p>
     <div style="width:100%;background:#e2e8f0;border-radius:4px;height:8px;margin-top:25px;">
         <div id="pf" style="width:0%;height:100%;background:#3182ce;transition:width 0.4s;"></div>
     </div>
     <p id="pt" style="font-size:13px;color:#4a5568;">Подготовка...</p>
+    <button class="cancel-btn" id="cancelBtn" onclick="cancelAudit()">⛔ Отменить проверку</button>
+    <p id="ct" style="font-size:12px;color:#718096;margin-top:10px;display:none;">Отмена...</p>
     </div>
     <script>
+    let cancelled = false;
+
+    async function cancelAudit(){{
+        if(cancelled) return;
+        if(!confirm('Отменить проверку? Все результаты будут удалены.')) return;
+        cancelled = true;
+        document.getElementById('cancelBtn').disabled = true;
+        document.getElementById('cancelBtn').innerText = '⏳ Отмена...';
+        document.getElementById('ct').style.display = 'block';
+        try {{
+            await fetch('/audit/{report_id}/cancel', {{method:'POST'}});
+        }} catch(e) {{ console.error(e); }}
+        setTimeout(() => {{ window.location.href = '/'; }}, 1500);
+    }}
+
     async function check(){{
+        if(cancelled) return;
         try{{
             const r = await fetch('/audit/{report_id}/status');
             const d = await r.json();
@@ -2845,11 +2869,30 @@ async def audit_progress_page(report_id: int):
             }}
             if(d.status==='completed') window.location.href='/audit/{report_id}/result';
             else if(d.status==='failed'){{alert('Ошибка анализа');window.location.href='/';}}
+            else if(d.status==='cancelled' || d.status==='deleted'){{window.location.href='/';}}
             else setTimeout(check,1000);
         }}catch(e){{setTimeout(check,2000);}}
     }} check();
     </script></body></html>
     """)
+
+
+@app.post("/audit/{report_id}/cancel")
+async def cancel_audit(report_id: int, db: Session = Depends(get_db)):
+    """Отменяет активную проверку."""
+    rep = db.query(AuditReport).filter(AuditReport.id == report_id).first()
+    if not rep:
+        return JSONResponse({"status": "not_found"}, status_code=404)
+    if rep.status == "completed":
+        return JSONResponse({"status": "already_completed"}, status_code=400)
+    # Устанавливаем флаг отмены в трекере
+    if report_id in PROGRESS_TRACKER:
+        PROGRESS_TRACKER[report_id]["cancel"] = True
+    else:
+        # Если задача ещё не стартовала или уже завершилась
+        pass
+    print(f"[CANCEL] Отмена отчёта #{report_id}")
+    return JSONResponse({"status": "cancelling"})
 
 
 @app.get("/audit/{report_id}/status")

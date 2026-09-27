@@ -9,10 +9,19 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.2.3"
+VERSION_FALLBACK = "9.3.0"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.3.0",
+        "date": "2026-09-27",
+        "changes": [
+            "Добавлена кнопка Отменить проверку на странице прогресса",
+            "Новый эндпоинт POST /audit/{id}/cancel",
+            "Отменённые отчёты помечаются статусом cancelled",
+        ]
+    },
     {
         "version": "9.2.3",
         "date": "2026-09-26",

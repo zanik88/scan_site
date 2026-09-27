@@ -59,6 +59,7 @@ GIGACHAT_API_KEY = os.getenv("GIGACHAT_API_KEY", "")
 _GIGACHAT_TOKEN_CACHE = {"token": None, "expires_at": 0}
 
 FREE_CHECKS_LIMIT = 5
+PRO_CHECKS_LIMIT = 50  # проверок в месяц для Pro
 FREE_COMPONENTS_LIMIT = 10
 
 PROGRESS_TRACKER = {}
@@ -1433,6 +1434,9 @@ class User(Base):
     subscription_plan = Column(String, default="Free")
     subscription_status = Column(String, default="Active")
     free_checks_used = Column(Integer, default=0, nullable=True)
+    pro_checks_used = Column(Integer, default=0, nullable=True)
+    pro_period_start = Column(DateTime, default=datetime.utcnow, nullable=True)
+    is_test = Column(Boolean, default=False, nullable=True)
     last_active = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     reports = relationship("AuditReport", back_populates="owner")
@@ -1517,6 +1521,9 @@ def run_migrations():
             for col, sql in [
                 ("session_token", "ALTER TABLE users ADD COLUMN session_token VARCHAR;"),
                 ("free_checks_used", "ALTER TABLE users ADD COLUMN free_checks_used INTEGER DEFAULT 0;"),
+                ("pro_checks_used", "ALTER TABLE users ADD COLUMN pro_checks_used INTEGER DEFAULT 0;"),
+                ("pro_period_start", "ALTER TABLE users ADD COLUMN pro_period_start DATETIME;"),
+                ("is_test", "ALTER TABLE users ADD COLUMN is_test BOOLEAN DEFAULT 0;"),
             ]:
                 if col not in user_cols:
                     cursor.execute(sql)
@@ -1565,6 +1572,28 @@ def sync_rules():
 sync_rules()
 
 
+def _mark_test_users():
+    db = SessionLocal()
+    try:
+        all_users = db.query(User).all()
+        changed = 0
+        for u in all_users:
+            if u.is_test is None:
+                u.is_test = _is_test_email(u.email)
+                changed += 1
+        if changed:
+            db.commit()
+            print(f"[MIGRATION] Помечено тестовых: {changed}")
+    except Exception as e:
+        print(f"[MIGRATION] is_test error: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+_mark_test_users()
+
+
 # ==========================================
 # УТИЛИТЫ
 # ==========================================
@@ -1589,16 +1618,40 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> Optiona
 
 
 def is_unlimited(user: Optional[User]) -> bool:
+    """Безлимит только для администратора. Pro — 50 проверок/месяц."""
     if not user:
         return False
-    return user.role == "admin" or user.subscription_plan in ["Pro", "Unlimited"]
+    return user.role == "admin"
 
 
-def get_free_checks_left(user: Optional[User], request: Request) -> int:
+def get_free_checks_left(user: Optional[User], request: Request, db: Optional[Session] = None) -> int:
+    """Возвращает остаток проверок. Для Pro учитывает 30-дневный период."""
     if user and user.role == "admin":
         return 999
+
     if user and user.subscription_plan in ["Pro", "Unlimited"]:
-        return 999
+        # Сброс счётчика Pro раз в 30 дней
+        now = datetime.utcnow()
+        period_start = user.pro_period_start or user.created_at or now
+        days_passed = (now - period_start).days
+        if days_passed >= 30:
+            db_local = SessionLocal()
+            try:
+                db_user = db_local.query(User).filter(User.id == user.id).first()
+                if db_user:
+                    db_user.pro_checks_used = 0
+                    db_user.pro_period_start = now
+                    db_local.commit()
+                    user.pro_checks_used = 0
+                    user.pro_period_start = now
+            except Exception as e:
+                db_local.rollback()
+                print("[PRO RESET] error:", e)
+            finally:
+                db_local.close()
+        used = user.pro_checks_used or 0
+        return max(0, PRO_CHECKS_LIMIT - used)
+
     if user:
         used = user.free_checks_used or 0
         return max(0, FREE_CHECKS_LIMIT - used)
@@ -1606,6 +1659,21 @@ def get_free_checks_left(user: Optional[User], request: Request) -> int:
         guest_count = int(request.cookies.get("guest_audit_count", 0))
         return max(0, FREE_CHECKS_LIMIT - guest_count)
     return FREE_CHECKS_LIMIT
+
+
+def _is_test_email(email: str) -> bool:
+    """Определяет тестовые email по паттернам."""
+    if not email:
+        return False
+    e = email.lower().strip()
+    test_patterns = ["@t.ru", "@test.ru", "@example.ru", "@example.com",
+                     "@test.com", "@localhost"]
+    if any(e.endswith(p) for p in test_patterns):
+        return True
+    local = e.split("@")[0]
+    if local.startswith(("u", "q", "z", "reg", "test")) and local[-1:].isdigit():
+        return True
+    return False
 
 
 def hash_password(password: str) -> str:
@@ -2700,7 +2768,20 @@ def _build_nav(user: Optional[User]) -> str:
 
 
 def _free_plan_banner(user: Optional[User], request: Optional[Request]) -> str:
-    if user and (user.role == "admin" or user.subscription_plan in ["Pro", "Unlimited"]):
+    if user and user.role == "admin":
+        return ""
+
+    if user and user.subscription_plan in ["Pro", "Unlimited"]:
+        left = get_free_checks_left(user, request)
+        if left <= 5:
+            color = "#dd6b20" if left <= 2 else "#3182ce"
+            bg = "#fffaf0" if left <= 2 else "#ebf8ff"
+            return f"""
+            <div style="background: {bg}; border-left: 5px solid {color}; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px;">
+                <b style="color: {color}; font-size: 14px;">💎 Pro: осталось {left} из {PRO_CHECKS_LIMIT} проверок в этом месяце</b>
+                <div style="color: #4a5568; font-size: 12px; margin-top: 4px;">Лимит автоматически обновится через 30 дней.</div>
+            </div>
+            """
         return ""
 
     left = get_free_checks_left(user, request)
@@ -2856,7 +2937,10 @@ async def upload_file(
         )
 
     if not unlimited and user:
-        user.free_checks_used = (user.free_checks_used or 0) + 1
+        if user.subscription_plan in ["Pro", "Unlimited"]:
+            user.pro_checks_used = (user.pro_checks_used or 0) + 1
+        else:
+            user.free_checks_used = (user.free_checks_used or 0) + 1
         db.commit()
 
     if docker_image and docker_image.strip():
@@ -2935,9 +3019,10 @@ async def register(request: Request, company_name: str = Form(...), email: str =
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="Email занят")
     assigned_role = "admin" if db.query(User).count() == 0 else "user"
+    is_test_user = _is_test_email(email)
     db.add(User(company_name=company_name, email=email, hashed_password=hash_password(password),
                 role=assigned_role, subscription_plan="Pro" if assigned_role == "admin" else "Free",
-                free_checks_used=0))
+                free_checks_used=0, is_test=is_test_user))
     db.commit()
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -3167,7 +3252,7 @@ async def pricing_page(user: User = Depends(get_current_user)):
         </div>
         <div class="card f">
             <div><div class="pt">Профессиональный 💎</div><div class="pa">7 900 ₽ <span style="font-size:13px;color:#718096;font-weight:normal;">/мес</span></div>
-            <ul class="pf"><li>✔️ Безлимит проверок</li><li>✔️ Docker-сканер</li><li>✔️ Excel-отчёты</li><li>✔️ Приоритетная поддержка</li></ul></div>
+            <ul class="pf"><li>✔️ {PRO_CHECKS_LIMIT} проверок в месяц</li><li>✔️ Excel-отчёты</li><li>✔️ Проверка CVE</li><li>✔️ Приоритетная поддержка</li></ul></div>
             <form action="/upgrade-to-pro" method="post"><button type="submit" class="btn">Подключить Pro</button></form>
         </div>
         <div class="card" style="opacity:0.85;">
@@ -3206,7 +3291,9 @@ async def dashboard(user: User = Depends(get_current_user), db: Session = Depend
     if user.role == "admin":
         plan_badge = "👑 Администратор (безлимит)"
     elif user.subscription_plan in ["Pro", "Unlimited"]:
-        plan_badge = "💎 Профессиональный (безлимит)"
+        used_pro = user.pro_checks_used or 0
+        left_pro = max(0, PRO_CHECKS_LIMIT - used_pro)
+        plan_badge = f"💎 Pro (использовано {used_pro} из {PRO_CHECKS_LIMIT}, осталось {left_pro})"
     else:
         used = user.free_checks_used or 0
         left = max(0, FREE_CHECKS_LIMIT - used)
@@ -3623,12 +3710,17 @@ async def download_excel(filename: str):
 
 
 @app.get("/admin", response_class=HTMLResponse)
-async def admin_panel(request: Request, db: Session = Depends(get_db)):
+async def admin_panel(request: Request, filter_mode: str = "all", db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user or user.role != "admin":
         return HTMLResponse("<h1 style='color:red;text-align:center;font-family:sans-serif;margin-top:100px;'>403 Доступ запрещён</h1>", status_code=403)
 
-    all_users = db.query(User).all()
+    query = db.query(User)
+    if filter_mode == "real":
+        query = query.filter((User.is_test == False) | (User.is_test == None))
+    elif filter_mode == "test":
+        query = query.filter(User.is_test == True)
+    all_users = query.all()
     all_reports = db.query(AuditReport).all()
     all_rules = db.query(LicenseRule).order_by(LicenseRule.component_key).all()
     all_feedback = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
@@ -3657,6 +3749,14 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
     unread_feedback = sum(1 for f in all_feedback if not f.is_read)
     now = datetime.utcnow()
     online_count = sum(1 for u in all_users if u.last_active and (now - u.last_active) < timedelta(minutes=15))
+    week_ago = now - timedelta(days=7)
+    monthly_ago = now - timedelta(days=30)
+    active_7d = sum(1 for u in all_users if u.last_active and u.last_active > week_ago)
+    active_30d = sum(1 for u in all_users if u.last_active and u.last_active > monthly_ago)
+    # Активные из них — не админы
+    real_7d = sum(1 for u in all_users if u.role != "admin" and u.last_active and u.last_active > week_ago)
+    # Регистрации за 7 дней
+    new_7d = sum(1 for u in all_users if u.created_at and u.created_at > week_ago)
 
     users_html = ""
     for u in all_users:
@@ -3679,7 +3779,8 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
             <button onclick="resetChecks({u.id}, '{u.email}')" style="background:#805ad5;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;font-weight:600;" title="Сбросить счётчик проверок">♻️</button>
             <button onclick="delUser({u.id}, '{u.email}')" style="background:#e53e3e;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;font-weight:600;">🗑️</button>
         </div>"""
-        users_html += f"<tr><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.id}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.company_name}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.email}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'><b>{u.role}</b></td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{plan_selector} {checks_info}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{status_badge}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{actions}</td></tr>"
+        test_badge = " <span style='background:#fefcbf; color:#744210; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600;'>ТЕСТ</span>" if u.is_test else ""
+        users_html += f"<tr><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.id}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.company_name}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.email}{test_badge}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'><b>{u.role}</b></td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{plan_selector} {checks_info}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{status_badge}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{actions}</td></tr>"
 
     reports_html = "".join([
         f"<tr><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.id}</td>"
@@ -3731,9 +3832,33 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         <div class="stat" style="border-left-color:#d69e2e;"><h4>Отчётов</h4><p>{len(all_reports)}</p></div>
         <div class="stat" style="border-left-color:#805ad5;"><h4>Обращений</h4><p>{len(all_feedback)}{(' <small style="color:#e53e3e;font-size:13px;">'+str(unread_feedback)+' нов.</small>') if unread_feedback else ''}</p></div>
         <div class="stat" style="border-left-color:#3182ce;"><h4>Просмотров</h4><p>{total_visits}</p></div>
+        <div class="stat" style="border-left-color:#3182ce;"><h4>📊 Активные за 7 дней</h4><p>{active_7d} <small style="color:#718096;font-size:13px;">({real_7d} без админов)</small></p></div>
+        <div class="stat" style="border-left-color:#805ad5;"><h4>📈 Активные за 30 дней</h4><p>{active_30d}</p></div>
         <div class="stat" style="border-left-color:#38a169;"><h4>🧠 Кэш ИИ</h4><p>{cache_total} <small style="color:#4a5568;font-size:14px;">записей</small></p></div>
         <div class="stat" style="border-left-color:#805ad5;"><h4>⚡ Хитов кэша</h4><p>{total_hits} <small style="color:#4a5568;font-size:14px;">(≈{savings_min:.1f} мин)</small></p></div>
     </div>
+    </div>
+
+    <div class="card" style="border-top-color:#38a169; background:linear-gradient(135deg,#f0fff4 0%,#ffffff 100%);">
+        <h3 style="margin-top:0; color:#1a365d;">📅 Сводка за последние 7 дней</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px;">
+            <div style="background:white; padding:14px 18px; border-radius:8px; border-left:4px solid #3182ce;">
+                <div style="font-size:11px; color:#718096; text-transform:uppercase; letter-spacing:0.5px;">Новые регистрации</div>
+                <div style="font-size:24px; font-weight:700; color:#2b6cb0; margin-top:4px;">{new_7d}</div>
+            </div>
+            <div style="background:white; padding:14px 18px; border-radius:8px; border-left:4px solid #38a169;">
+                <div style="font-size:11px; color:#718096; text-transform:uppercase; letter-spacing:0.5px;">Заходили в сервис</div>
+                <div style="font-size:24px; font-weight:700; color:#2f855a; margin-top:4px;">{active_7d}</div>
+            </div>
+            <div style="background:white; padding:14px 18px; border-radius:8px; border-left:4px solid #dd6b20;">
+                <div style="font-size:11px; color:#718096; text-transform:uppercase; letter-spacing:0.5px;">Онлайн сейчас</div>
+                <div style="font-size:24px; font-weight:700; color:#c05621; margin-top:4px;">{online_count}</div>
+            </div>
+            <div style="background:white; padding:14px 18px; border-radius:8px; border-left:4px solid #805ad5;">
+                <div style="font-size:11px; color:#718096; text-transform:uppercase; letter-spacing:0.5px;">Всего пользователей</div>
+                <div style="font-size:24px; font-weight:700; color:#6b46c1; margin-top:4px;">{len(all_users)}</div>
+            </div>
+        </div>
     </div>
 
     <div class="card" style="overflow-x:auto; border-top-color:#805ad5;">
@@ -3748,6 +3873,11 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
     <div class="card" style="overflow-x:auto;">
     <h3 style="margin-top:0;">Управление пользователями</h3>
     <p style="font-size:12px;color:#718096;">♻️ — сбросить счётчик бесплатных проверок</p>
+    <div style="display:flex; gap:10px; margin:15px 0; flex-wrap:wrap;">
+        <a href="/admin?filter_mode=all" style="padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:600; font-size:13px; {'background:#3182ce; color:white;' if filter_mode == 'all' else 'background:#edf2f7; color:#2d3748;'}">👥 Все ({len(all_users)})</a>
+        <a href="/admin?filter_mode=real" style="padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:600; font-size:13px; {'background:#38a169; color:white;' if filter_mode == 'real' else 'background:#edf2f7; color:#2d3748;'}">✅ Реальные</a>
+        <a href="/admin?filter_mode=test" style="padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:600; font-size:13px; {'background:#dd6b20; color:white;' if filter_mode == 'test' else 'background:#edf2f7; color:#2d3748;'}">🧪 Тестовые</a>
+    </div>
     <table><tr><th>ID</th><th>Компания</th><th>Email</th><th>Роль</th><th>Тариф / Проверки</th><th>Статус</th><th>Действия</th></tr>{users_html}</table>
     </div>
 

@@ -1,0 +1,215 @@
+Microsoft Windows
+CentOS 
+Red Hat Enterprise Linux 
+EnterpriseDB
+Microsoft Access
+Microsoft SQL Server
+Oracle Database
+Oracle NoSQL Database
+Redis Enterprise
+SAP HANA
+SAP Adaptive Server Enterprise (ASE) / Sybase Adaptive Server Enterprise (ASE)
+Adobe ColdFusion
+IBM WebSphere Application Server
+Amazon Web Services
+Microsoft Azure
+Microsoft Dynamics
+Microsoft SharePoint
+SAP
+Unity
+JAVA 21
+Unreal
+Fedora 
+Microsoft Corporation
+Archive.AdminApi
+Archive.BL
+Archive.Cryptography
+Jimmy Bogard
+Devart
+Npgsql
+Sergey Savchuk, Jan Jansen, Stefan Hausotte
+Pomelo Foundation
+Pomelo.JsonObject
+Swashbuckle.AspNetCore.SwaggerGen
+[Операционные системы и базовые компоненты]
+Ubuntu Server 22.04 LTS
+Debian GNU/Linux 12
+Rocky Linux 9.4
+AlmaLinux 9.4
+Red Hat Enterprise Linux 9.4
+openSUSE Leap 15.6
+SUSE Linux Enterprise Server 15 SP6
+Astra Linux Special Edition 1.8
+РЕД ОС 8
+ALT Linux 10
+GNU Bash 5.2
+systemd 252
+OpenSSL==3.0.13
+GNU C Library (glibc) 2.36
+BusyBox 1.36.1
+
+[Контейнеризация и оркестрация]
+Docker Engine 26.1.4
+containerd 1.7.18
+Podman 5.1.2
+Kubernetes 1.30.3
+Helm 3.15.3
+Kustomize 5.4.2
+HashiCorp Vault 1.17.2
+Vault Secrets Operator 0.10.0
+NGINX Ingress Controller 1.11.1
+Traefik 3.1.0
+
+[СУБД, кэш и очереди]
+PostgreSQL 16.4
+MySQL 8.4.1
+MariaDB 11.4.2
+SQLite 3.46.0
+Redis 7.2.5
+MongoDB 7.0.12
+ClickHouse 24.7.2.13
+Elasticsearch 8.14.1
+OpenSearch 2.15.0
+RabbitMQ 3.13.4
+Apache Kafka 3.8.0
+Apache ZooKeeper 3.9.2
+Apache ActiveMQ Artemis 2.35.0
+NATS Server 2.10.18
+
+[Мониторинг, логи и трассировка]
+Zabbix Server 7.0.2
+Zabbix Agent 2 7.0.2
+Prometheus 2.53.1
+Alertmanager 0.27.0
+Grafana 11.1.0
+Grafana Loki 3.1.0
+Promtail 3.1.0
+Telegraf 1.31.0
+InfluxDB 2.7.8
+Elastic Beats Filebeat 8.14.1
+Fluent Bit 3.1.4
+OpenTelemetry Collector 0.105.0
+Jaeger 1.58.0
+Sentry 24.7.0
+
+[Веб-серверы и прикладные серверы]
+NGINX 1.26.1
+Apache HTTP Server 2.4.62
+Caddy 2.8.4
+HAProxy 3.0.3
+Apache Tomcat 10.1.26
+Eclipse Jetty 12.0.12
+WildFly 32.0.1.Final
+Gunicorn 22.0.0
+uWSGI 2.0.26
+
+[Языки, runtime и среды разработки]
+Python==3.12.4
+pip 24.1.2
+Poetry 1.8.3
+Node.js 20.15.1
+npm 10.7.0
+Yarn 1.22.22
+pnpm 9.6.0
+Java OpenJDK 21.0.4
+Eclipse Temurin JDK 17.0.12
+Apache Maven 3.9.8
+Gradle 8.9
+Go 1.22.5
+Rust 1.80.0
+Cargo 1.80.0
+.NET SDK 8.0.303
+PHP 8.3.9
+Ruby 3.3.4
+Perl 5.38.2
+GCC 13.2.0
+Clang 18.1.8
+CMake 3.30.1
+Make 4.4.1
+
+[IDE, редакторы и инструменты разработки]
+Visual Studio Code 1.92.0
+Visual Studio Community 2022 17.10
+IntelliJ IDEA Community Edition 2024.2
+PyCharm Community Edition 2024.2
+Eclipse IDE 2024-06
+Apache NetBeans 22
+Git 2.45.2
+GitLab Community Edition 17.1
+Gitea 1.22.1
+Jenkins 2.462.1
+TeamCity 2024.07
+SonarQube Community Build 10.6
+Nexus Repository OSS 3.71.0
+JFrog Artifactory OSS 7.90.0
+
+[NVIDIA, CUDA и машинное обучение]
+NVIDIA Driver 550.90.07
+NVIDIA Container Toolkit 1.16.1
+CUDA Toolkit 12.5
+CUDA Runtime 12.5.82
+cuDNN 9.2.1
+TensorRT 10.2.0
+NCCL 2.22.3
+NVIDIA CUDA Base Image nvidia/cuda:12.5.0-base-ubuntu22.04
+PyTorch==2.4.0
+TensorFlow==2.17.0
+ONNX Runtime 1.18.1
+Hugging Face Transformers 4.43.3
+vLLM 0.5.4
+llama.cpp b3600
+JupyterLab 4.2.3
+scikit-learn 1.5.1
+numpy 2.0.1
+pandas 2.2.2
+
+[Python-библиотеки веб-приложения]
+fastapi==0.112.0
+uvicorn==0.30.5
+sqlalchemy==2.0.32
+aiohttp==3.10.2
+pydantic==2.8.2
+python-docx==1.1.2
+reportlab==4.2.2
+openpyxl==3.1.5
+python-multipart==0.0.9
+requests==2.32.3
+httpx==0.27.0
+jinja2==3.1.4
+alembic==1.13.2
+pytest==8.3.2
+black==24.4.2
+ruff==0.5.6
+
+[JavaScript и frontend]
+React 18.3.1
+Next.js 14.2.5
+Vue.js 3.4.32
+Angular 18.1.2
+TypeScript 5.5.4
+Vite 5.3.5
+Webpack 5.93.0
+Chart.js 4.4.3
+axios 1.7.2
+lodash 4.17.21
+express 4.19.2
+NestJS 10.4.2
+
+[Безопасность и аудит]
+HashiCorp Boundary 0.16.0
+Keycloak 25.0.2
+Open Policy Agent 0.67.0
+Trivy 0.53.0
+Syft 1.9.0
+Grype 0.81.0
+ScanCode Toolkit 32.3.0
+OWASP Dependency-Track 4.11.0
+FOSSA CLI 3.11.0
+
+[Служебные строки для проверки фильтрации]
+Name Version License Source
+Компонент Версия Лицензия Правообладатель
+https://example.org/dependencies
+Для установки выполните команду docker compose up -d
+This document contains a list of dependencies used by the application.
+Версия программного продукта: 1.0.0

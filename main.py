@@ -1483,83 +1483,83 @@ def sanitize_string(text: str) -> str:
 
 
 def _split_name_version(line: str) -> tuple:
+    """Разбирает строку на имя и версию. Поддерживает Maven, npm, pip."""
     line = line.strip()
-    # Формат "name — version — url" (em-dash или en-dash)
-    if "—" in line or "–" in line:
-        parts = re.split(r'\s*[—–]\s*', line)
+    if not line:
+        return ("", "unknown")
+
+    # Убираем нумерацию в начале: "1. ", "169. "
+    line_clean = re.sub(r'^\d+\.\s*', '', line)
+
+    # --- Maven-координаты: group:artifact:jar:version:scope ---
+    maven_match = re.match(
+        r'^([a-zA-Z0-9_\-\.]+:[a-zA-Z0-9_\-\.]+):(jar|war|pom|aar|bundle):([^:]+):(compile|runtime|test|provided|system)',
+        line_clean
+    )
+    if maven_match:
+        name = maven_match.group(1)
+        version = maven_match.group(3)
+        return (name, version)
+
+    # Упрощённый Maven: group:artifact:version
+    maven_simple = re.match(
+        r'^([a-zA-Z0-9_\-\.]+:[a-zA-Z0-9_\-\.]+):([\d][^:\s]*)',
+        line_clean
+    )
+    if maven_simple and ':' in maven_simple.group(1):
+        return (maven_simple.group(1), maven_simple.group(2))
+
+    # --- npm с em-dash: @scope/package — ^version — npm: ... ---
+    if "—" in line_clean or "–" in line_clean:
+        parts = re.split(r'\s*[—–]\s*', line_clean)
         if len(parts) >= 2:
             name = parts[0].strip()
-            ver = parts[1].strip().lstrip("^~v=")
-            # Отсеять мусорные имена (номера, слишком короткие)
-            name = re.sub(r'^\d+\.\s*', '', name)  # убрать "1. "
-            if len(name) >= 2 and ver:
-                return name, ver if ver else "unknown"
-    # Формат "name: version" или "name == version"
-    m = re.match(r'^([A-Za-z0-9_\-\.\@/]+)\s*(==|>=|<=|~=|!=|>|<|=)\s*([^\s,;#]+)', line)
+            ver_raw = parts[1].strip()
+            # Убираем ^ ~ v = из версии
+            ver_clean = re.sub(r'^[\^~v=\s]+', '', ver_raw)
+            # Если версия начинается с цифры — берём
+            ver_match = re.match(r'^([\d][^\s,]*)', ver_clean)
+            if ver_match:
+                version = ver_match.group(1)
+            else:
+                version = ver_clean if ver_clean else "unknown"
+            if len(name) >= 2:
+                return (name, version)
+
+    # --- pip: name==version ---
+    m = re.match(r'^([A-Za-z0-9_\-\.]+)\s*(==|>=|<=|~=|!=|>|<|=)\s*([^\s,;#]+)', line_clean)
     if m:
         return m.group(1).strip(), m.group(3).strip()
-    m = re.match(r'^["\']?([A-Za-z0-9_\-\.@/]+)["\']?\s*[:\s]\s*["\']?[\^~v=]?([\d][^\s,;"\']*)', line)
+
+    # --- Формат "name: version" ---
+    m = re.match(r'^["\']?([A-Za-z0-9_\-\.@/]+)["\']?\s*:\s*["\']?[\^~v=]?([\d][^\s,;"\']*)', line_clean)
     if m:
         return m.group(1).strip(), m.group(2).strip()
-    if line.count(":") >= 2:
-        parts = line.split(":")
-        if len(parts) >= 3 and re.match(r'^[\d]', parts[-1]):
-            return parts[1].strip(), parts[-1].strip()
-    parts = re.split(r'[\t]+', line, maxsplit=1)
-    if len(parts) >= 2 and parts[1].strip():
-        return parts[0].strip(), parts[1].strip()
-    return line.strip(), "unknown"
+
+    # --- Fallback: возвращаем всю строку как имя, версия unknown ---
+    # Если в строке есть цифры в конце — попробуем извлечь как версию
+    m = re.match(r'^([^\d]+?)\s+([\d][\d\.\-\w]*)$', line_clean)
+    if m:
+        name = m.group(1).strip()
+        ver = m.group(2).strip()
+        if len(name) >= 2:
+            return (name, ver)
+    # Иначе — вся строка как имя
+    return (line_clean, "unknown")
 
 
-def _is_garbage_component(name: str) -> bool:
-    if not name:
-        return True
-    n = name.strip()
-    if len(n) < 2:
-        return True
-    if n.startswith('['):
-        return True
-    if "," in n and len(n.split(",")) > 1:
-        return True
-    lower = n.lower()
-    if lower.startswith(("author", "copyright", "company", "namespace", "project",
-                          "creator", "maintainer", "owner", "publisher")):
-        return True
-    if lower in ("name", "название", "компонент", "component"):
-        return True
-    # Заголовки и разделы документа
-    headers = (
-        "оглавление", "содержание", "frontend", "backend", "введение",
-        "пояснительная", "заключение", "приложение", "раздел", "глава",
-        "список", "перечень", "описание", "аннотация", "титульный",
-        "table of contents", "contents", "introduction", "conclusion",
-        "appendix", "chapter", "section", "list of",
-    )
-    if any(lower.startswith(h) for h in headers):
-        return True
-    # Пронумерованные заголовки: "1. Список основных библиотек..."
-    if re.match(r'^\d+\.\s+[А-ЯA-Z]', n):
-        # Но не "1. react" — если после цифры идёт слово с маленькой или дефис
-        # Проверяем: если больше 4 слов — это заголовок
-        rest = re.sub(r'^\d+\.\s+', '', n)
-        if len(rest.split()) > 3:
-            return True
-    # Строки с многоточием (оглавление): "1. FRONTEND . . . . 1"
-    if "..." in n or " . . " in n or "…" in n:
-        return True
-    # Слишком длинные строки (описания, а не названия)
-    if len(n) > 100:
-        return True
-    # Номера страниц в конце
-    if re.search(r'\s+\d+$', n) and len(n.split()) > 2:
-        return True
-    if " " in n and all(w[0].isupper() for w in n.split() if w):
-        if not any(k in lower for k in ["visual", "studio", "code", "spring", "boot", "sql", "server",
-                                         "red", "hat", "sap", "ibm", "amazon", "microsoft", "google",
-                                         "apache", "oracle", "node", "docker", "kubernetes", "github",
-                                         "gitlab", "open", "source", "enterprise", "foundation"]):
-            return True
-    return False
+def _is_private_library(name: str) -> bool:
+    """Определяет私有 библиотеки компании."""
+    n = (name or "").lower().strip()
+    if not n:
+        return False
+    private_markers = [
+        "ru.logic.bpm", "logicbpm", "@logicbpm", "logic.bpm",
+        "tenant-encryption", "tenant-interceptor", "tenant-kafka",
+        "tenant-security", "tenant-storage",
+        "archive.adminapi", "archive.bl", "archive.cryptography",
+    ]
+    return any(marker in n for marker in private_markers)
 
 
 def _is_license_like(text: str) -> bool:
@@ -1582,6 +1582,96 @@ def _is_license_like(text: str) -> bool:
             return True
     # Если строка не содержит цифр — вряд ли это версия
     if not any(c.isdigit() for c in t):
+        return True
+    return False
+
+
+def _is_garbage_component(name: str) -> bool:
+    """Отсеивает авторов, пространства имён и метаданные."""
+    if not name:
+        return True
+    n = name.strip()
+    if len(n) < 2:
+        return True
+    if n.startswith('['):
+        return True
+    if "," in n and len(n.split(",")) > 1:
+        return True
+    # Имена людей: два-три слова с заглавной буквы (не название)
+    words = n.split()
+    if 2 <= len(words) <= 3:
+        if all(w[0].isupper() for w in words if w):
+            # Проверить, что это не название продукта
+            product_markers = [
+                "server", "windows", "linux", "oracle", "microsoft", "ibm",
+                "sap", "adobe", "amazon", "google", "docker", "kubernetes",
+                "red hat", "enterprise", "community", "edition", "runtime",
+                "toolkit", "framework", "python", "java", "node", "npm",
+                "apache", "nginx", "postgres", "mysql", "redis", "kafka",
+                "grafana", "zabbix", "prometheus", "unity", "unreal",
+                "active", "director", "visual", "studio", "source",
+                "git", "gitlab", "jenkins", "teamcity", "sonar",
+                "hashicorp", "vault", "consul", "nomad", "boundary",
+                "elastic", "opensearch", "fluent", "opentelemetry",
+                "py", "torch", "tensor", "flow", "open", "policy",
+            ]
+            lower = n.lower()
+            if not any(m in lower for m in product_markers):
+                return True
+    lower = n.lower()
+    if lower.startswith(("author", "copyright", "company", "namespace", "project",
+                          "creator", "maintainer", "owner", "publisher")):
+        return True
+    if lower in ("name", "название", "компонент", "component"):
+        return True
+    # Заголовки и разделы документа
+    headers = (
+        "оглавление", "содержание", "frontend", "backend", "введение",
+        "пояснительная", "заключение", "приложение", "раздел", "глава",
+        "список", "перечень", "описание", "аннотация", "титульный",
+        "table of contents", "contents", "introduction", "conclusion",
+        "appendix", "chapter", "section", "list of",
+    )
+    if any(lower.startswith(h) for h in headers):
+        return True
+    # Пронумерованные заголовки
+    if re.match(r'^\d+\.\s+[А-ЯA-Z]', n):
+        rest = re.sub(r'^\d+\.\s+', '', n)
+        if len(rest.split()) > 3:
+            return True
+    # Многоточия из оглавления
+    if "..." in n or " . . " in n or "…" in n:
+        return True
+    # Слишком длинные строки
+    if len(n) > 100:
+        return True
+    # Номер страницы в конце длинной строки
+    if re.search(r'\s+\d+$', n) and len(n.split()) > 2:
+        return True
+    # Только число
+    if re.match(r'^\d+$', n):
+        return True
+    # Приватные/служебные строки
+    if lower.startswith(("дополненная", "указанные", "таким образом", "в ходе", "в составе")):
+        return True
+    # URL
+    if lower.startswith(("http://", "https://", "www.")):
+        return True
+    # Строки с "для установки", "this document"
+    if "для установки" in lower or "this document" in lower:
+        return True
+    # Заголовки таблиц: name + version + license (+ source)
+    table_headers = [
+        "name version license",
+        "name version license source",
+        "компонент версия лицензия",
+        "компонент версия лицензия правообладатель",
+        "наименование версия лицензия",
+    ]
+    if any(lower.startswith(h) for h in table_headers):
+        return True
+    # Строки про "версия программного продукта"
+    if lower.startswith(("версия программного продукта", "версия по", "программное обеспечение")):
         return True
     return False
 
@@ -1640,6 +1730,12 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
     for item in extracted:
         if _is_license_like(item.get("version", "")):
             item["version"] = "unknown"
+    # Пометка приватных библиотек
+    for item in extracted:
+        if _is_private_library(item.get("name", "")):
+            item["_private"] = True
+            item["license"] = "Собственная разработка"
+            item["status"] = "✅ Разрешено <br><small style='color:#2f855a;'>💡 Собственная разработка компании (не в публичных реестрах)</small>"
     # Дедупликация по имени (без учёта регистра)
     seen = set()
     unique = []
@@ -1657,6 +1753,13 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
 async def fetch_package_info_with_version(session, package_name, table_version, cached_rules,
                                           report_id, ai_provider="auto") -> dict:
     search_clean = sanitize_string(package_name)
+
+    # Приватные библиотеки — сразу возвращаем результат без ИИ
+    if _is_private_library(package_name):
+        return {"name": package_name, "version": table_version,
+                "license": "Собственная разработка",
+                "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 Собственная разработка компании</small>"}
+
 
     if any(re.search(r'\b' + re.escape(ide) + r'\b', search_clean)
            for ide in ["visual studio code", "vscode", "vscodium", "intellij idea", "pycharm", "webstorm", "eclipse", "netbeans"]):

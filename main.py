@@ -3134,7 +3134,6 @@ async def about_page(user: User = Depends(get_current_user)):
 
         <h3 style="color:#1a365d;margin-top:30px;">Ссылки</h3>
         <ul style="font-size:14px;line-height:1.8;">
-            <li><a href="https://github.com/zanik88/scan_site" target="_blank">GitHub-репозиторий</a></li>
             <li><a href="https://reestr.digital.gov.ru/" target="_blank">Единый реестр российского ПО</a></li>
             <li><a href="/terms">Пользовательское соглашение</a></li>
             <li><a href="/feedback">Обратная связь</a></li>

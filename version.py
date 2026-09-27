@@ -9,10 +9,21 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.3.3"
+VERSION_FALLBACK = "9.4.0"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.4.0",
+        "date": "2026-09-27",
+        "changes": [
+            "Elasticsearch/OpenSearch/Kibana/Logstash → категория СУБД",
+            "Добавлено 110+ Maven namespace-правил (Spring, Apache, Google, Bouncy Castle и др.)",
+            "PDF временно убран из UI (много ложных срабатываний)",
+            "Бэкенд отклоняет PDF с понятным сообщением",
+            "Современный дизайн формы загрузки: карточки, бейджи форматов, градиентная кнопка",
+        ]
+    },
     {
         "version": "9.3.3",
         "date": "2026-09-27",

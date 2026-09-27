@@ -583,6 +583,158 @@ DEFAULT_RULES = {
     "consul": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "HashiCorp Consul — BUSL."},
     "nomad": {"license": "BUSL-1.1", "status": "⚠️ Требует внимания", "recommendation": "HashiCorp Nomad — BUSL."},
     "pulumi": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Pulumi — Apache-2.0."},
+
+    # ============ Maven namespace-правила (Java) ============
+    # Spring
+    "org.springframework": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Spring Framework."},
+    "org.springframework.boot": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Spring Boot."},
+    "org.springframework.security": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Spring Security."},
+    "org.springframework.cloud": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Spring Cloud."},
+    "org.springframework.ai": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Spring AI."},
+    "org.springframework.kafka": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Spring Kafka."},
+    "org.springframework.retry": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Spring Retry."},
+
+    # Apache
+    "org.apache.commons": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache Commons."},
+    "org.apache.tika": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache Tika."},
+    "org.apache.poi": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache POI."},
+    "org.apache.pdfbox": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache PDFBox."},
+    "org.apache.httpcomponents": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache HttpComponents."},
+    "org.apache.kafka": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache Kafka."},
+    "org.apache.logging": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache Logging."},
+    "org.apache.opennlp": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache OpenNLP."},
+    "org.apache.james": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache James."},
+    "org.apache.xmlbeans": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache XMLBeans."},
+    "org.apache.tomcat": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apache Tomcat."},
+    "org.apache.antlr": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "ANTLR."},
+    "org.apache.zookeeper": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "ZooKeeper."},
+
+    # Google
+    "com.google.guava": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Google Guava."},
+    "com.google.code.gson": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Gson."},
+    "com.google.code.findbugs": {"license": "LGPL-3.0", "status": "✅ Разрешено", "recommendation": "FindBugs."},
+    "com.google.protobuf": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "Protobuf."},
+    "com.google.errorprone": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Error Prone."},
+    "com.google.api.grpc": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "gRPC-Google."},
+    "com.google.android": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Google Annotations."},
+    "com.google.j2objc": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "J2ObjC."},
+    "com.googlecode.plist": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "dd-plist."},
+
+    # Jackson
+    "com.fasterxml.jackson": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Jackson."},
+    "com.fasterxml": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "FasterXML."},
+
+    # Bouncy Castle / Netty / gRPC
+    "org.bouncycastle": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Bouncy Castle."},
+    "io.netty": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Netty."},
+    "io.grpc": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "gRPC."},
+
+    # Observability
+    "io.opentelemetry": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "OpenTelemetry."},
+    "io.opentelemetry.semconv": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "OTel SemConv."},
+    "io.micrometer": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Micrometer."},
+    "io.prometheus": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Prometheus Client."},
+    "io.perfmark": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "PerfMark."},
+    "io.projectreactor": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Project Reactor."},
+    "io.qdrant": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Qdrant client."},
+    "io.swagger.core.v3": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Swagger Core."},
+
+    # Jakarta
+    "jakarta.activation": {"license": "EPL-2.0 / GPL-2.0", "status": "✅ Разрешено", "recommendation": "Jakarta Activation."},
+    "jakarta.annotation": {"license": "EPL-2.0 / GPL-2.0", "status": "✅ Разрешено", "recommendation": "Jakarta Annotations."},
+    "jakarta.validation": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Jakarta Validation."},
+    "jakarta.xml.bind": {"license": "EPL-2.0 / GPL-2.0", "status": "✅ Разрешено", "recommendation": "Jakarta XML Bind."},
+    "javax.validation": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "javax.validation."},
+
+    # Test
+    "org.junit": {"license": "EPL-2.0", "status": "✅ Разрешено", "recommendation": "JUnit."},
+    "org.junit.jupiter": {"license": "EPL-2.0", "status": "✅ Разрешено", "recommendation": "JUnit 5."},
+    "org.junit.platform": {"license": "EPL-2.0", "status": "✅ Разрешено", "recommendation": "JUnit Platform."},
+    "junit": {"license": "EPL-1.0", "status": "✅ Разрешено", "recommendation": "JUnit 4."},
+    "org.mockito": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Mockito."},
+    "org.assertj": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "AssertJ."},
+    "org.hamcrest": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "Hamcrest."},
+    "org.awaitility": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Awaitility."},
+    "org.apiguardian": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Apiguardian."},
+    "org.opentest4j": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "OpenTest4J."},
+    "org.xmlunit": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "XMLUnit."},
+    "org.skyscreamer": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JSONassert."},
+    "org.testcontainers": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Testcontainers."},
+
+    # Logging
+    "ch.qos.logback": {"license": "EPL-1.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Logback."},
+    "org.slf4j": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "SLF4J."},
+    "net.logstash.logback": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Logstash Encoder."},
+
+    # Nimbus / Square
+    "com.nimbusds": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Nimbus JOSE+JWT."},
+    "com.squareup.okhttp3": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "OkHttp."},
+    "com.squareup.okio": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Okio."},
+
+    # Котлин
+    "org.jetbrains": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JetBrains Annotations."},
+    "org.jetbrains.kotlin": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Kotlin stdlib."},
+
+    # Прочее
+    "com.github.ben-manes.caffeine": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Caffeine cache."},
+    "com.github.victools": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "JSON Schema Generator."},
+    "com.github.docker-java": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Docker Java client."},
+    "com.github.junrar": {"license": "UnRAR License", "status": "⚠️ Требует внимания", "recommendation": "junrar — нестандартная лицензия."},
+    "com.github.luben": {"license": "BSD-2-Clause", "status": "✅ Разрешено", "recommendation": "Zstd-JNI."},
+    "com.github.stephenc.jcip": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JCIP Annotations."},
+    "com.github.jai-imageio": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "JAI ImageIO."},
+    "com.healthmarketscience.jackcess": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Jackcess."},
+    "com.ethlo.time": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "ITU library."},
+    "com.zaxxer": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "SparseBitSet."},
+    "com.rometools": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "ROME."},
+    "com.pff": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "java-libpst."},
+    "com.jayway.jsonpath": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JsonPath."},
+    "com.knuddels": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "jtokkit."},
+    "com.networknt": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JSON Schema Validator."},
+    "com.drewnoakes": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "metadata-extractor."},
+    "com.adobe.xmp": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "XMPCore."},
+    "com.epam": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Parso."},
+    "com.sun.istack": {"license": "EPL-2.0 / GPL-2.0", "status": "✅ Разрешено", "recommendation": "istack-commons."},
+    "com.github.albfernandez": {"license": "LGPL-2.1 / MPL-1.1", "status": "✅ Разрешено", "recommendation": "juniversalchardet."},
+    "com.vaadin.external.google": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Android JSON for tests."},
+    "org.codelibs": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "jhighlight."},
+    "org.eclipse.angus": {"license": "EPL-2.0 / GPL-2.0", "status": "✅ Разрешено", "recommendation": "Angus Activation."},
+    "org.glassfish.jaxb": {"license": "EPL-2.0 / GPL-2.0", "status": "✅ Разрешено", "recommendation": "Glassfish JAXB."},
+    "org.jboss.logging": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JBoss Logging."},
+    "org.hibernate.validator": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Hibernate Validator."},
+    "org.gagravarr": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Vorbis-Java."},
+    "org.json": {"license": "JSON License (MIT-like)", "status": "✅ Разрешено", "recommendation": "JSON-java."},
+    "org.jsoup": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "jsoup."},
+    "org.jspecify": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JSpecify."},
+    "org.jdom": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "JDOM2."},
+    "org.latencyutils": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "LatencyUtils."},
+    "org.objenesis": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Objenesis."},
+    "org.ow2.asm": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "ASM."},
+    "org.projectlombok": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Lombok."},
+    "org.reactivestreams": {"license": "MIT-0", "status": "✅ Разрешено", "recommendation": "Reactive Streams."},
+    "org.rnorth.duct-tape": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Duct Tape."},
+    "org.hdrhistogram": {"license": "BSD-2-Clause", "status": "✅ Разрешено", "recommendation": "HdrHistogram."},
+    "org.netpreserve": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "jwarc."},
+    "org.tallison": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "jmatio."},
+    "org.tukaani": {"license": "Public Domain", "status": "✅ Разрешено", "recommendation": "XZ for Java."},
+    "org.brotli": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Brotli decoder."},
+    "org.yaml": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "SnakeYAML."},
+    "org.webjars": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "WebJars."},
+    "org.springdoc": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "SpringDoc OpenAPI."},
+    "info.picocli": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "picocli."},
+    "io.github.openfeign": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "OpenFeign."},
+    "net.bytebuddy": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Byte Buddy."},
+    "net.java.dev.jna": {"license": "LGPL-2.1 / Apache-2.0", "status": "✅ Разрешено", "recommendation": "JNA."},
+    "net.minidev": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "json-smart."},
+    "software.amazon.awssdk": {"license": "Apache-2.0", "status": "⚠️ Требует внимания", "recommendation": "AWS SDK. Интеграция опциональна."},
+    "dev.langchain4j": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "LangChain4j."},
+    "commons-codec": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Commons Codec."},
+    "commons-io": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Commons IO."},
+    "commons-logging": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Commons Logging."},
+    "commons-fileupload": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "Commons FileUpload."},
+    "aopalliance": {"license": "Public Domain", "status": "✅ Разрешено", "recommendation": "AOP Alliance."},
+    "at.yawk.lz4": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "lz4-java."},
+    "org.antlr": {"license": "BSD-3-Clause", "status": "✅ Разрешено", "recommendation": "ANTLR runtime."},
 }
 
 
@@ -895,12 +1047,12 @@ def _detect_category(name: str) -> str:
         return "Очереди сообщений"
 
     # Мониторинг и логирование
+    # Elasticsearch/OpenSearch/Kibana/Logstash — это СУБД/поиск, не мониторинг
     monitor_keys = ["zabbix", "prometheus", "grafana", "nagios", "datadog",
-                    "new relic", "splunk", "elasticsearch", "kibana", "logstash",
-                    "opensearch", "graylog", "loki", "jaeger", "zipkin", "tempo",
+                    "new relic", "splunk", "loki", "jaeger", "zipkin", "tempo",
                     "opentelemetry", "otel", "sentry", "victoriametrics",
                     "influxdb", "telegraf", "fluentd", "fluentbit", "fluent-bit",
-                    "filebeat", "metricbeat", "logstash", "vector"]
+                    "filebeat", "metricbeat", "vector"]
     if any(_has_word(n, k) for k in monitor_keys):
         return "Мониторинг и логирование"
 
@@ -908,7 +1060,8 @@ def _detect_category(name: str) -> str:
     db_keys = ["postgres", "mysql", "mariadb", "oracle", "sql server", "sqlite", "mongodb",
                "redis", "valkey", "clickhouse", "cassandra", "scylladb", "couchdb", "neo4j",
                "zookeeper", "sap hana", "enterprisedb", "npgsql", "db2", "teradata",
-               "firebird", "hive", "tibero", "tmax"]
+               "firebird", "hive", "tibero", "tmax",
+               "elasticsearch", "opensearch", "kibana", "logstash", "graylog"]
     if any(_has_word(n, k) for k in db_keys):
         return "СУБД и хранилища"
 
@@ -1660,6 +1813,23 @@ def _is_garbage_component(name: str) -> bool:
     # Строки с "для установки", "this document"
     if "для установки" in lower or "this document" in lower:
         return True
+    # Длинные предложения (абзацы из PDF) — не компоненты
+    if len(n.split()) > 6:
+        return True
+    # Строки с кавычками и типичным «текстовым» содержимым
+    if any(marker in lower for marker in [
+        "указанием", "функционировании", "разработке", "продукта",
+        "компании", "публичных", "распространяемые", "перечень",
+        "применённых", "описание", "используемых", "настоящий",
+        "представлен", "приведен", "включает",
+    ]):
+        return True
+    # Строки, начинающиеся с маленькой буквы или части слова (обрывки)
+    if n and n[0].islower() and len(n.split()) > 2:
+        return True
+    # Строки с "»" или "«" в начале/конце (цитаты из PDF)
+    if n.startswith(("»", "«")) or n.endswith(("»", "«")) or n.startswith("помощник"): 
+        return True
     # Заголовки таблиц: name + version + license (+ source)
     table_headers = [
         "name version license",
@@ -1716,6 +1886,64 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                 for dep, ver in data.get("dependencies", {}).items():
                     if not _is_garbage_component(dep):
                         extracted.append({"name": dep, "version": str(ver)})
+        elif ext == "pdf":
+            # Извлекаем текст из всех страниц PDF
+            pdf_reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+            full_text = ""
+            for page in pdf_reader.pages:
+                try:
+                    page_text = page.extract_text() or ""
+                    full_text += page_text + "\n"
+                except Exception as pe:
+                    print(f"[PDF] Ошибка страницы: {pe}")
+
+            # Собираем статистику по строкам (для поиска повторяющихся)
+            lines_raw = [ln.strip() for ln in full_text.splitlines()]
+            from collections import Counter
+            line_counter = Counter([ln for ln in lines_raw if len(ln) >= 5])
+            # Повторяющиеся больше 3 раз — это колонтитулы, пропускаем
+            repeated_lines = {ln for ln, cnt in line_counter.items() if cnt >= 3}
+
+            seen_names = set()
+            for line in lines_raw:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                # Очень короткие строки (1-4 символа) — пропустить
+                if len(line) < 5:
+                    continue
+                # Только цифры (номер страницы)
+                if re.match(r'^\d+$', line):
+                    continue
+                # Строка из точек/пробелов (оглавление)
+                if re.match(r'^[\s\.\u2026]+$', line):
+                    continue
+                # Строка с многоточием и цифрой в конце (оглавление)
+                if re.search(r'\.\s*\.\s*\.', line) and re.search(r'\d+\s*$', line):
+                    continue
+                # Повторяющаяся строка (колонтитул)
+                if line in repeated_lines:
+                    continue
+                # Строка с "Оглавление" / "Содержание" / "стр."
+                lower = line.lower()
+                if lower.startswith(("оглавление", "содержание", "стр.", "страница", "page ")):
+                    continue
+                # Строка вида "1. FRONTEND . . . 3" (оглавление с номером страницы)
+                if re.match(r'^\d+\.\s+\S+', line) and re.search(r'\.{2,}', line):
+                    continue
+                # Строка вида "1" или "12" в конце (уже отфильтровано выше)
+                # Разбираем на name + version
+                name, ver = _split_name_version(line)
+                if not name or len(name) < 3:
+                    continue
+                if _is_garbage_component(name):
+                    continue
+                # Дедупликация
+                key = name.lower().strip()
+                if key in seen_names:
+                    continue
+                seen_names.add(key)
+                extracted.append({"name": name, "version": ver})
         else:
             text = file_bytes.decode("utf-8", errors="ignore")
             for line in text.splitlines():
@@ -2369,26 +2597,58 @@ STATUS_LEGEND_HTML = """
 """
 
 FILE_UPLOAD_HTML = """
-<div class="upload-box" style="background: #f8fafc; border: 2px dashed #cbd5e0; padding: 25px; border-radius: 6px; margin: 25px 0; text-align: center;">
-    <h3 style="color: #1a365d; margin-top: 0;">📂 Загрузите файл или вставьте список компонентов</h3>
-    <div style="margin-bottom: 20px;">
+<div style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-radius: 14px; padding: 30px 25px; margin: 25px 0; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+
+    <!-- Заголовок -->
+    <div style="text-align: center; margin-bottom: 25px;">
+        <div style="font-size: 36px; margin-bottom: 6px; line-height: 1;">📂</div>
+        <h3 style="color: #1a365d; margin: 0 0 6px 0; font-size: 22px; font-weight: 700;">Загрузите компоненты</h3>
+        <p style="color: #718096; margin: 0; font-size: 13px;">Файл, текст или список зависимостей для аудита</p>
+    </div>
+
+    <!-- Выбор ИИ -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
         <label style="font-size: 13px; font-weight: 600; color: #4a5568;">🧠 ИИ-анализ:</label>
-        <select name="ai_provider" style="padding: 7px 14px; border-radius: 4px; border: 1px solid #cbd5e0;">
+        <select name="ai_provider" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 13px; background: white; cursor: pointer; color: #2d3748; font-weight: 500;">
             <option value="auto" selected>🔀 Авто (GigaChat → база)</option>
             <option value="gigachat">GigaChat (Сбер)</option>
         </select>
     </div>
-    <div style="display: flex; gap: 20px; flex-wrap: wrap; text-align: left; justify-content: center;">
-        <div style="flex: 1; min-width: 240px; background: white; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
-            <h4 style="margin: 0 0 10px 0; color: #2d3748; font-size: 14px;">Способ 1: Файл</h4>
-            <input type="file" name="file" accept=".txt,.xlsx,.xls,.docx,.pdf,.json" style="width: 100%;">
+
+    <!-- Два способа: grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 5px;">
+
+        <!-- Способ 1: Файл -->
+        <div style="background: white; border-radius: 12px; padding: 22px 20px; border: 1px solid #e2e8f0; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 22px;">📎</span>
+                <div>
+                    <div style="font-size: 15px; font-weight: 700; color: #2d3748;">Способ 1: Файл</div>
+                    <div style="font-size: 11px; color: #718096;">Выберите файл с зависимостями</div>
+                </div>
+            </div>
+            <input type="file" name="file" accept=".txt,.xlsx,.xls,.docx,.json" style="width: 100%; font-size: 13px; padding: 10px; border: 2px dashed #cbd5e0; border-radius: 8px; background: #f8fafc; cursor: pointer; box-sizing: border-box;">
+            <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 5px;">
+                <span style="background: #ebf8ff; color: #2b6cb0; padding: 3px 8px; border-radius: 5px; font-size: 10px; font-family: monospace; font-weight: 600;">.txt</span>
+                <span style="background: #ebf8ff; color: #2b6cb0; padding: 3px 8px; border-radius: 5px; font-size: 10px; font-family: monospace; font-weight: 600;">.json</span>
+                <span style="background: #ebf8ff; color: #2b6cb0; padding: 3px 8px; border-radius: 5px; font-size: 10px; font-family: monospace; font-weight: 600;">.xlsx</span>
+                <span style="background: #ebf8ff; color: #2b6cb0; padding: 3px 8px; border-radius: 5px; font-size: 10px; font-family: monospace; font-weight: 600;">.docx</span>
+            </div>
         </div>
-        <div style="flex: 1; min-width: 240px; background: white; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
-            <h4 style="margin: 0 0 10px 0; color: #2d3748; font-size: 14px;">Способ 2: Текст</h4>
-            <textarea name="text_input" maxlength="500" placeholder="fastapi==0.115.6&#10;pandas==2.2.3" style="width: 100%; min-height: 80px; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-family: monospace;"></textarea>
+
+        <!-- Способ 2: Текст -->
+        <div style="background: white; border-radius: 12px; padding: 22px 20px; border: 1px solid #e2e8f0; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="font-size: 22px;">✏️</span>
+                <div>
+                    <div style="font-size: 15px; font-weight: 700; color: #2d3748;">Способ 2: Текст</div>
+                    <div style="font-size: 11px; color: #718096;">Список вида имя==версия</div>
+                </div>
+            </div>
+            <textarea name="text_input" maxlength="500" placeholder="fastapi==0.115.6&#10;pandas==2.2.3&#10;sqlalchemy==2.0.35" style="width: 100%; min-height: 100px; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; resize: vertical; box-sizing: border-box; background: #f8fafc; line-height: 1.5;"></textarea>
         </div>
+
     </div>
-    <!-- Docker-сканер временно отключён. Вернём после доработки. -->
 </div>
 """
 
@@ -2397,7 +2657,7 @@ GUIDELINES_HTML = """
     <h3 style="color: #1a365d; margin-top: 0;">📌 Рекомендации</h3>
     <ul style="font-size: 14px; color: #4a5568; line-height: 1.7;">
         <li><b>SBOM (CycloneDX/SPDX):</b> <code>.cdx.json</code>, <code>.spdx.json</code>, <code>package.json</code></li>
-        <li><b>Word / PDF:</b> Maven-координаты, списки с тире.</li>
+        <li><b>Word:</b> Maven-координаты, списки с тире.</li>
         <li><b>Текстом:</b> по одной строке <code>имя==версия</code></li>
         <li><b>CVE:</b> автоматически проверяется через OSV API (только для компонентов с известной версией).</li>
     </ul>
@@ -2504,12 +2764,16 @@ async def index(request: Request, user: User = Depends(get_current_user)):
     <title>Компонент-Эксперт | ПП РФ № 1236</title>
     <style>
         body {{ font-family: -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f7fafc; color: #2d3748; }}
+        @media (max-width: 640px) {{
+            div[style*="grid-template-columns: 1fr 1fr"] {{ grid-template-columns: 1fr !important; }}
+        }}
         .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 14px; align-items: center; flex-wrap: wrap; gap: 10px; }}
         .nav-brand {{ font-weight: 800; color: #1a365d; font-size: 16px; }}
         .card {{ background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid #1a365d; }}
         h1 {{ color: #1a365d; text-align: center; }}
-        .submit-btn {{ background: #2f855a; color: white; border: none; padding: 14px 32px; font-size: 15px; font-weight: 600; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 15px; }}
-        .submit-btn:hover {{ background: #276749; }}
+        .submit-btn {{ background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; border: none; padding: 16px 32px; font-size: 16px; font-weight: 700; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 12px rgba(47,133,90,0.25); transition: all 0.2s ease; letter-spacing: 0.3px; }}
+        .submit-btn:hover {{ background: linear-gradient(135deg, #2f855a 0%, #276749 100%); box-shadow: 0 6px 16px rgba(47,133,90,0.35); transform: translateY(-1px); }}
+        .submit-btn:active {{ transform: translateY(0); box-shadow: 0 2px 6px rgba(47,133,90,0.25); }}
     </style></head><body>
     <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div>{_build_nav(user)}</div></div>
     <div class="card">
@@ -2570,6 +2834,26 @@ async def upload_file(
         return RedirectResponse(url="/pricing", status_code=status.HTTP_303_SEE_OTHER)
 
     is_pro = unlimited
+
+    # Отклоняем PDF с понятным сообщением
+    if file and file.filename and file.filename.lower().endswith(".pdf"):
+        return HTMLResponse(
+            """<html><head><meta charset="UTF-8"><title>Формат не поддерживается</title>
+            <style>body{font-family:sans-serif;text-align:center;padding:60px;background:#f7fafc;}
+            .card{background:white;max-width:520px;margin:0 auto;padding:40px;border-radius:8px;
+            border-top:5px solid #dd6b20;box-shadow:0 4px 12px rgba(0,0,0,0.05);}
+            h1{color:#dd6b20;} p{color:#4a5568;line-height:1.6;}</style></head><body>
+            <div class="card">
+              <h1>📄 PDF временно не поддерживается</h1>
+              <p>Извлечение компонентов из PDF даёт много ложных срабатываний.</p>
+              <p>Пожалуйста, загрузите файл в одном из форматов:</p>
+              <p style="font-family:monospace;background:#edf2f7;padding:10px;border-radius:4px;">
+              .txt · .json · .xlsx · .docx</p>
+              <p><a href="/" style="color:#3182ce;font-weight:600;">← Вернуться на главную</a></p>
+            </div>
+            </body></html>""",
+            status_code=400,
+        )
 
     if not unlimited and user:
         user.free_checks_used = (user.free_checks_used or 0) + 1

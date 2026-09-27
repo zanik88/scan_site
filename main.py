@@ -1484,7 +1484,18 @@ def sanitize_string(text: str) -> str:
 
 def _split_name_version(line: str) -> tuple:
     line = line.strip()
-    m = re.match(r'^([A-Za-z0-9_\-\.]+)\s*(==|>=|<=|~=|!=|>|<|=)\s*([^\s,;#]+)', line)
+    # Формат "name — version — url" (em-dash или en-dash)
+    if "—" in line or "–" in line:
+        parts = re.split(r'\s*[—–]\s*', line)
+        if len(parts) >= 2:
+            name = parts[0].strip()
+            ver = parts[1].strip().lstrip("^~v=")
+            # Отсеять мусорные имена (номера, слишком короткие)
+            name = re.sub(r'^\d+\.\s*', '', name)  # убрать "1. "
+            if len(name) >= 2 and ver:
+                return name, ver if ver else "unknown"
+    # Формат "name: version" или "name == version"
+    m = re.match(r'^([A-Za-z0-9_\-\.\@/]+)\s*(==|>=|<=|~=|!=|>|<|=)\s*([^\s,;#]+)', line)
     if m:
         return m.group(1).strip(), m.group(3).strip()
     m = re.match(r'^["\']?([A-Za-z0-9_\-\.@/]+)["\']?\s*[:\s]\s*["\']?[\^~v=]?([\d][^\s,;"\']*)', line)
@@ -1515,6 +1526,32 @@ def _is_garbage_component(name: str) -> bool:
                           "creator", "maintainer", "owner", "publisher")):
         return True
     if lower in ("name", "название", "компонент", "component"):
+        return True
+    # Заголовки и разделы документа
+    headers = (
+        "оглавление", "содержание", "frontend", "backend", "введение",
+        "пояснительная", "заключение", "приложение", "раздел", "глава",
+        "список", "перечень", "описание", "аннотация", "титульный",
+        "table of contents", "contents", "introduction", "conclusion",
+        "appendix", "chapter", "section", "list of",
+    )
+    if any(lower.startswith(h) for h in headers):
+        return True
+    # Пронумерованные заголовки: "1. Список основных библиотек..."
+    if re.match(r'^\d+\.\s+[А-ЯA-Z]', n):
+        # Но не "1. react" — если после цифры идёт слово с маленькой или дефис
+        # Проверяем: если больше 4 слов — это заголовок
+        rest = re.sub(r'^\d+\.\s+', '', n)
+        if len(rest.split()) > 3:
+            return True
+    # Строки с многоточием (оглавление): "1. FRONTEND . . . . 1"
+    if "..." in n or " . . " in n or "…" in n:
+        return True
+    # Слишком длинные строки (описания, а не названия)
+    if len(n) > 100:
+        return True
+    # Номера страниц в конце
+    if re.search(r'\s+\d+$', n) and len(n.split()) > 2:
         return True
     if " " in n and all(w[0].isupper() for w in n.split() if w):
         if not any(k in lower for k in ["visual", "studio", "code", "spring", "boot", "sql", "server",
@@ -1603,6 +1640,15 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
     for item in extracted:
         if _is_license_like(item.get("version", "")):
             item["version"] = "unknown"
+    # Дедупликация по имени (без учёта регистра)
+    seen = set()
+    unique = []
+    for item in extracted:
+        key = (item.get("name") or "").lower().strip()
+        if key and key not in seen:
+            seen.add(key)
+            unique.append(item)
+    extracted = unique
     if not extracted:
         extracted = [{"name": filename.split(".")[0], "version": "1.0.0"}]
     return extracted
@@ -1944,7 +1990,7 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                 res = await fetch_package_info_with_version(
                     session, item["name"], item["version"], cached_rules, report_id, ai_provider)
                 # Пауза 1.5 сек перед следующим ИИ-запросом
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(0.7)
                 if report_id in PROGRESS_TRACKER:
                     PROGRESS_TRACKER[report_id]["processed"] += 1
                 return res
@@ -2843,6 +2889,25 @@ async def audit_progress_page(report_id: int):
     </div>
     <script>
     let cancelled = false;
+    let startTime = null;
+    let lastProcessed = 0;
+    let eta = null;
+
+    function formatTime(sec){{
+        if(sec < 60) return Math.round(sec) + ' сек';
+        const m = Math.floor(sec / 60);
+        const s = Math.round(sec % 60);
+        return m + ' мин ' + s + ' сек';
+    }}
+
+    function computeEta(processed, total){{
+        if(!startTime || processed < 3) return null;
+        const elapsed = (Date.now() - startTime) / 1000;
+        const speed = processed / elapsed;  // компонентов/сек
+        const remaining = total - processed;
+        if(speed <= 0) return null;
+        return remaining / speed;
+    }}
 
     async function cancelAudit(){{
         if(cancelled) return;
@@ -2863,9 +2928,21 @@ async def audit_progress_page(report_id: int):
             const r = await fetch('/audit/{report_id}/status');
             const d = await r.json();
             if(d.total>0){{
+                if(startTime === null) startTime = Date.now();
                 const pct = Math.round((d.processed/d.total)*100);
                 document.getElementById('pf').style.width = pct + '%';
-                document.getElementById('pt').innerText = `Анализ: ${{d.processed}}/${{d.total}} (${{pct}}%)`;
+
+                // Пересчитываем ETA каждые 5 компонентов
+                if(d.processed > lastProcessed){{
+                    eta = computeEta(d.processed, d.total);
+                    lastProcessed = d.processed;
+                }}
+
+                let text = `Анализ: ${{d.processed}}/${{d.total}} (${{pct}}%)`;
+                if(eta !== null && d.processed < d.total){{
+                    text += ` — осталось ~${{formatTime(eta)}}`;
+                }}
+                document.getElementById('pt').innerText = text;
             }}
             if(d.status==='completed') window.location.href='/audit/{report_id}/result';
             else if(d.status==='failed'){{alert('Ошибка анализа');window.location.href='/';}}

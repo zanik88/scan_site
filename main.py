@@ -2733,6 +2733,64 @@ GUIDELINES_HTML = """
 """
 
 
+METRIKA_ID = "113107006"
+
+METRIKA_SCRIPT = """<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+    m[i].l=1*new Date();
+    for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+    ym(""" + METRIKA_ID + """, "init", {
+        ssr: true,
+        webvisor: true,
+        clickmap: true,
+        ecommerce: "dataLayer",
+        accurateTrackBounce: true,
+        trackLinks: true
+    });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/""" + METRIKA_ID + """" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->"""
+
+
+@app.middleware("http")
+async def add_metrika(request: Request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type:
+        return response
+    try:
+        # Собираем тело из стримингового ответа
+        body_chunks = []
+        async for chunk in response.body_iterator:
+            if isinstance(chunk, str):
+                chunk = chunk.encode("utf-8")
+            body_chunks.append(chunk)
+        body = b"".join(body_chunks).decode("utf-8", errors="ignore")
+
+        # Вставляем метрику перед </head>
+        if "</head>" in body and "mc.yandex.ru/metrika" not in body:
+            body = body.replace("</head>", METRIKA_SCRIPT + "\n</head>", 1)
+            print(f"[METRIKA] Скрипт вставлен в {request.url.path}")
+
+        # Формируем новый ответ
+        from starlette.responses import Response as StarletteResponse
+        new_headers = {k: v for k, v in response.headers.items()
+                       if k.lower() not in ("content-length", "content-type")}
+        return StarletteResponse(
+            content=body,
+            status_code=response.status_code,
+            headers=new_headers,
+            media_type="text/html",
+        )
+    except Exception as e:
+        print(f"[METRIKA] error: {e}")
+        return response
+
+
 @app.middleware("http")
 async def log_visits(request: Request, call_next):
     response = await call_next(request)

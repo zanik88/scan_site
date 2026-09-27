@@ -2809,6 +2809,52 @@ def _free_plan_banner(user: Optional[User], request: Optional[Request]) -> str:
     """
 
 
+@app.get("/robots.txt", response_class=HTMLResponse)
+async def robots_txt(request: Request):
+    base_url = "https://reestr-audit.ru"
+    content = f"""User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /audit/
+Disallow: /download_excel/
+Disallow: /logout
+Disallow: /feedback
+
+Sitemap: {base_url}/sitemap.xml
+"""
+    return HTMLResponse(content=content, media_type="text/plain")
+
+
+@app.get("/sitemap.xml", response_class=HTMLResponse)
+async def sitemap_xml(request: Request):
+    base_url = "https://reestr-audit.ru"
+    from datetime import datetime as dt
+    today = dt.utcnow().strftime("%Y-%m-%d")
+    pages = [
+        ("", "1.0", "daily"),
+        ("about", "0.8", "weekly"),
+        ("pricing", "0.9", "weekly"),
+        ("terms", "0.3", "monthly"),
+        ("feedback", "0.4", "monthly"),
+    ]
+    items = ""
+    for path, prio, freq in pages:
+        loc = f"{base_url}/{path}" if path else f"{base_url}/"
+        items += f"""  <url>
+    <loc>{loc}</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>{freq}</changefreq>
+    <priority>{prio}</priority>
+  </url>
+"""
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{items}</urlset>
+"""
+    return HTMLResponse(content=xml, media_type="application/xml")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "component-expert", "version": APP_VERSION}
@@ -2842,7 +2888,20 @@ async def index(request: Request, user: User = Depends(get_current_user)):
 
     return HTMLResponse(content=f"""
     <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
-    <title>Компонент-Эксперт | ПП РФ № 1236</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Компонент-Эксперт — автоматизированный аудит ПО по ПП РФ № 1236</title>
+    <meta name="description" content="Сервис автоматизированного аудита программного обеспечения на соответствие Постановлению Правительства РФ № 1236. Проверка лицензий, CVE-уязвимостей, запрещённых компонентов за минуты.">
+    <meta name="keywords" content="аудит ПО, ПП 1236, реестр российского ПО, проверка лицензий, CVE, импортозамещение, экспертиза ПО">
+    <meta name="author" content="Захаров Николай Петрович">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://reestr-audit.ru/">
+    <meta property="og:title" content="Компонент-Эксперт — аудит ПО по ПП 1236">
+    <meta property="og:description" content="Проверьте своё ПО на соответствие требованиям Единого реестра российского ПО за минуты.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://reestr-audit.ru/">
+    <meta property="og:site_name" content="Компонент-Эксперт">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <style>
         body {{ font-family: -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f7fafc; color: #2d3748; }}
         @media (max-width: 640px) {{
@@ -3222,7 +3281,11 @@ async def feedback_submit(
 @app.get("/pricing", response_class=HTMLResponse)
 async def pricing_page(user: User = Depends(get_current_user)):
     return HTMLResponse(content=f"""
-    <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Тарифы</title>
+    <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
+    <title>Тарифы — Компонент-Эксперт</title>
+    <meta name="description" content="Тарифные планы сервиса «Компонент-Эксперт»: бесплатно, разовая проверка 1 900 ₽, Pro 7 900 ₽/мес (50 проверок), корпоративный план.">
+    <link rel="canonical" href="https://reestr-audit.ru/pricing">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <style>body{{font-family:-apple-system,sans-serif;max-width:1100px;margin:0 auto;padding:20px;background:#f7fafc;color:#2d3748;}}
     .nav{{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e2e8f0;margin-bottom:30px;font-size:14px;flex-wrap:wrap;gap:10px;}}
     .nav-brand{{font-weight:800;color:#1a365d;font-size:16px;}}
@@ -3650,7 +3713,11 @@ async def about_page(user: User = Depends(get_current_user)):
         </div>"""
 
     return HTMLResponse(content=f"""
-    <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>О сервисе</title>
+    <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
+    <title>О сервисе Компонент-Эксперт — аудит ПО по ПП 1236</title>
+    <meta name="description" content="Информация о платформе «Компонент-Эксперт»: назначение, технологии, история версий, ссылки. Автоматизированный аудит ПО на соответствие ПП РФ № 1236.">
+    <link rel="canonical" href="https://reestr-audit.ru/about">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <style>
         body {{ font-family: -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f7fafc; color: #2d3748; }}
         .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 14px; flex-wrap: wrap; gap: 10px; }}

@@ -51,3 +51,8 @@ main.py.bak*
 *.bak2
 *.bak3
 *.bak4
+
+# Автоматическая сортировка проекта
+backups/main_py/
+patches/
+main.py.working*

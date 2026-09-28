@@ -9,7 +9,6 @@ services:
       - .env
     environment:
       DATABASE_URL: sqlite:////app/data/saas_audit.db
-      COOKIE_SECURE: "false"
       PYTHONUNBUFFERED: "1"
     volumes:
       - ./generated_reports:/app/generated_reports

@@ -1914,6 +1914,110 @@ def _is_garbage_component(name: str) -> bool:
     return False
 
 
+def _parse_license_doc_line(line: str):
+    """
+    Парсит строку формата "Название (Лицензия)" или "Название ([Лицензия](url))".
+    Возвращает (name, license) или None.
+    """
+    line = line.strip()
+    if not line:
+        return None
+    line = line.rstrip(".")
+
+    # Приоритет 1: Markdown-формат [License Text](url)
+    md_groups = re.findall(r'\[([^\]]+)\]\([^)]+\)', line)
+    if md_groups:
+        license_keywords = [
+            "license", "licence", "gpl", "lgpl", "mit", "bsd", "apache",
+            "mozilla", "mpl", "epl", "cddl", "isc", "artistic",
+            "public domain", "psf", "python", "openssl", "curl",
+            "openldap", "лиценз", "соглашение", "zero clause",
+            "exception", "runtime", "foundation",
+        ]
+        license_text = None
+        for g in reversed(md_groups):
+            g_lower = g.lower()
+            g_stripped = g.strip()
+            if len(g_stripped) <= 5 and not any(k in g_lower for k in ["mit", "bsd", "gpl", "apache"]):
+                continue
+            if any(k in g_lower for k in license_keywords):
+                license_text = g_stripped
+                break
+        if license_text:
+            name_match = re.match(r'^([^\[(]+?)\s*[\(\[]', line)
+            if name_match:
+                name = name_match.group(1).strip()
+                if len(name) >= 2:
+                    return (name, license_text)
+
+    # Приоритет 2: Круглые скобки (Nazvanie (License))
+    groups = re.findall(r'\(([^()]+)\)', line)
+    if groups:
+        license_keywords = [
+            "license", "licence", "gpl", "lgpl", "mit", "bsd", "apache",
+            "mozilla", "mpl", "epl", "cddl", "isc", "artistic",
+            "public domain", "psf", "python", "openssl", "curl",
+            "openldap", "лиценз", "соглашение", "zero clause",
+            "exception", "runtime", "foundation",
+        ]
+        license_text = None
+        for g in reversed(groups):
+            g_lower = g.lower()
+            g_stripped = g.strip()
+            if len(g_stripped) <= 5 and not any(k in g_lower for k in ["mit", "bsd", "gpl", "apache"]):
+                continue
+            if any(k in g_lower for k in license_keywords):
+                license_text = g_stripped
+                break
+        if license_text:
+            name_match = re.match(r'^([^(]+?)\s*\(', line)
+            if name_match:
+                name = name_match.group(1).strip()
+                if len(name) >= 2:
+                    return (name, license_text)
+
+    return None
+
+
+def _clean_markdown(text: str) -> str:
+    """Убирает markdown-разметку: [текст](url) → текст, **жирный** → жирный."""
+    if not text:
+        return text
+    # [текст](url) → текст
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    # **текст** → текст
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    # *текст* → текст (курсив, но осторожно с умножением)
+    text = re.sub(r'(?<![\w*])\*([^*\n]+)\*(?![\w*])', r'\1', text)
+    # `код` → код
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    return text.strip()
+
+
+def _is_section_header(line: str) -> bool:
+    """Определяет заголовки разделов документа."""
+    line = line.strip()
+    if not line or "(" in line:
+        return False
+    headers = [
+        "операционная система",
+        "компиляторы и средства сборки",
+        "среда выполнения",
+        "система управления базами данных",
+        "обмен сообщениями",
+        "сетевые компоненты",
+        "криптография",
+        "системные библиотеки",
+        "аудиоподсистема",
+        "средства администрирования",
+        "мониторинг",
+        "библиотеки исполнения",
+        "среда выполнения python",
+    ]
+    lower = line.lower()
+    return any(lower.startswith(h) for h in headers)
+
+
 def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
     extracted = []
     ext = filename.split(".")[-1].lower() if "." in filename else ""
@@ -1931,6 +2035,7 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                             extracted.append({"name": name, "version": ver})
         elif ext == "docx":
             doc = docx.Document(io.BytesIO(file_bytes))
+            # Обработка таблиц (как было)
             for table in doc.tables:
                 for row in table.rows:
                     row_vals = [c.text.strip() for c in row.cells if c.text.strip()]
@@ -1939,11 +2044,37 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                         ver = row_vals[1] if len(row_vals) > 1 else "unknown"
                         if not _is_garbage_component(name):
                             extracted.append({"name": name, "version": ver})
+            # Обработка параграфов с поддержкой лицензий
             for p in doc.paragraphs:
-                if p.text.strip():
-                    parts = re.split(r'[\t:,]+', p.text.strip())
-                    if parts and not _is_garbage_component(parts[0]):
-                        extracted.append({"name": parts[0].strip(), "version": parts[1].strip() if len(parts) > 1 else "unknown"})
+                raw = p.text.strip()
+                if not raw:
+                    continue
+                # Убираем markdown-разметку
+                line = _clean_markdown(raw)
+                if not line:
+                    continue
+                # Пропускаем заголовки разделов
+                if _is_section_header(line):
+                    continue
+                # Пробуем формат "Название (Лицензия)" / "Название ([License](url))"
+                license_doc = _parse_license_doc_line(raw)
+                if not license_doc:
+                    license_doc = _parse_license_doc_line(line)
+                if license_doc:
+                    name, lic = license_doc
+                    extracted.append({
+                        "name": name,
+                        "version": "unknown",
+                        "_license": lic,
+                    })
+                    continue
+                # Обычная обработка — "name: version" или просто "name"
+                parts = re.split(r'[\t:,]+', line)
+                if parts and parts[0] and not _is_garbage_component(parts[0]):
+                    extracted.append({
+                        "name": parts[0].strip(),
+                        "version": parts[1].strip() if len(parts) > 1 else "unknown",
+                    })
         elif ext == "json":
             data = json.loads(file_bytes.decode("utf-8", errors="ignore"))
             if "components" in data:
@@ -2016,10 +2147,30 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
             text = file_bytes.decode("utf-8", errors="ignore")
             for line in text.splitlines():
                 line = line.strip()
-                if line and not line.startswith("#"):
-                    name, ver = _split_name_version(line)
-                    if not _is_garbage_component(name):
-                        extracted.append({"name": name, "version": ver})
+                if not line or line.startswith("#"):
+                    continue
+
+                # Пропускаем заголовки разделов
+                if _is_section_header(line):
+                    continue
+
+                # Пробуем формат "Название (Лицензия)"
+                license_doc = _parse_license_doc_line(line)
+                if license_doc:
+                    name, lic = license_doc
+                    # Не фильтруем — если строка попала в формат "Название (Лицензия)",
+                    # значит, это уже валидный компонент
+                    extracted.append({
+                        "name": name,
+                        "version": "unknown",
+                        "_license": lic,
+                    })
+                    continue
+
+                # Обычный формат "name==version"
+                name, ver = _split_name_version(line)
+                if not _is_garbage_component(name):
+                    extracted.append({"name": name, "version": ver})
     except Exception as e:
         print(f"Parse error {filename}: {e}")
     # Нормализация: если "версия" на самом деле лицензия — сбрасываем
@@ -2047,8 +2198,33 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
 
 
 async def fetch_package_info_with_version(session, package_name, table_version, cached_rules,
-                                          report_id, ai_provider="auto") -> dict:
+                                          report_id, ai_provider="auto", pre_license=None) -> dict:
     search_clean = sanitize_string(package_name)
+
+    # Если лицензия уже извлечена из документа — используем её без ИИ
+    if pre_license:
+        lic_lower = pre_license.lower()
+        # Определяем статус по ключевым словам в лицензии
+        forbidden_markers = [
+            "proprietary", "commercial", "eula", "nvidia", "oracle",
+            "microsoft", "aws", "google cloud", "sspl", "bsl",
+        ]
+        attention_markers = [
+            "gpl-3", "gplv3", "agpl", "lgpl", "mpl", "busl", "sspl",
+            "openjdk", "gpl-2", "gplv2",
+        ]
+        if any(m in lic_lower for m in forbidden_markers):
+            status = "⚠️ Требует внимания"
+        elif any(m in lic_lower for m in attention_markers):
+            status = "Разрешено с условиями"
+        else:
+            status = "✅ Разрешено"
+        return {
+            "name": package_name,
+            "version": table_version,
+            "license": pre_license,
+            "status": f"{status} <br><small style='color:#4a5568;'>💡 Лицензия из документа</small>",
+        }
 
     # Приватные библиотеки — сразу возвращаем результат без ИИ
     if _is_private_library(package_name):
@@ -2387,7 +2563,8 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                 if PROGRESS_TRACKER.get(report_id, {}).get("cancel", False):
                     return None
                 res = await fetch_package_info_with_version(
-                    session, item["name"], item["version"], cached_rules, report_id, ai_provider)
+                    session, item["name"], item["version"], cached_rules, report_id, ai_provider,
+                    pre_license=item.get("_license"))
                 # Пауза 1.5 сек перед следующим ИИ-запросом
                 await asyncio.sleep(0.7)
                 if report_id in PROGRESS_TRACKER:

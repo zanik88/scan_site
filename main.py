@@ -144,6 +144,30 @@ app = FastAPI(title="Платформа «Компонент-Эксперт» - 
 # БАЗА ЗНАНИЙ
 # ==========================================
 DEFAULT_RULES = {
+
+    # === KB: Qt / zlib / Eigen / QuaZIP / JKQTPlotter (patch_kb_qt.py) ===
+    "qt":          {"license": "LGPL-3.0 / GPL-3.0 / Commercial",
+                    "status": "⚠️ Требует внимания",
+                    "recommendation": "Copyleft. Проприетарное ПО: динамическая линковка или коммерческая лицензия Qt."},
+    "qt5":         {"license": "LGPL-3.0 / GPL-3.0 / Commercial",
+                    "status": "⚠️ Требует внимания",
+                    "recommendation": "См. Qt."},
+    "qt6":         {"license": "LGPL-3.0 / GPL-3.0 / Commercial",
+                    "status": "⚠️ Требует внимания",
+                    "recommendation": "См. Qt."},
+    "quazip":      {"license": "LGPL-2.1",
+                    "status": "Разрешено",
+                    "recommendation": "LGPL-2.1, динамическая линковка."},
+    "eigen":       {"license": "MPL-2.0 / LGPL-2.1",
+                    "status": "Разрешено",
+                    "recommendation": "MPL-2.0 или LGPL-2.1 (dual)."},
+    "jkqtplotter": {"license": "LGPL-2.1",
+                    "status": "Разрешено",
+                    "recommendation": "LGPL-2.1, динамическая линковка."},
+    "zlib":        {"license": "Zlib",
+                    "status": "Разрешено",
+                    "recommendation": "Zlib - разрешительная лицензия."},
+
     "visual studio code": {"license": "MIT", "status": "Разрешено", "recommendation": "IDE не входит в состав ПО."},
     "vscode": {"license": "MIT", "status": "Разрешено", "recommendation": "IDE."},
     "vscodium": {"license": "MIT", "status": "Разрешено", "recommendation": "Open Source IDE."},
@@ -1276,6 +1300,20 @@ def _check_docker_package_status(name: str) -> tuple:
             if rule_key_l == name_lower or rule_key_l in name_lower:
                 return rule["status"], rule.get("recommendation", "")
 
+    # === PATCH patch_kb_qt.py: hard-match до ИИ ===
+        _name_norm = re.sub(r'\s+v?[\d][\d.]*.*$', '', name_lower).strip()
+        _hard = {
+            "qt":          ("⚠️ Требует внимания", "Copyleft. Проприетарное ПО: динамическая линковка или коммерческая лицензия Qt."),
+            "qt5":         ("⚠️ Требует внимания", "См. Qt."),
+            "qt6":         ("⚠️ Требует внимания", "См. Qt."),
+            "quazip":      ("Разрешено", "LGPL-2.1, динамическая линковка."),
+            "eigen":       ("Разрешено", "MPL-2.0 или LGPL-2.1 (dual)."),
+            "jkqtplotter": ("Разрешено", "LGPL-2.1, динамическая линковка."),
+            "zlib":        ("Разрешено", "Zlib - разрешительная лицензия."),
+        }
+        if _name_norm in _hard:
+            return _hard[_name_norm][0], _hard[_name_norm][1]
+    # === /PATCH ===
     for rule_key, rule in DEFAULT_RULES.items():
         if "Разрешено" in rule["status"] and "⚠️" not in rule["status"] and "❌" not in rule["status"]:
             if rule_key.lower() == name_lower:
@@ -1283,7 +1321,7 @@ def _check_docker_package_status(name: str) -> tuple:
 
     alpine_markers = ("alpine-", "apk-", "busybox", "musl-", "musl.", "scanelf", "ssl_client",
                       "ca-certificates", "aports-", "openrc-", "skalibs-")
-    if any(m in name_lower for m in alpine_markers) or name_lower == "zlib":
+    if any(m in name_lower for m in alpine_markers):
         return "Разрешено <br><small style='color:#2f855a;'>💡 Системный пакет Alpine Linux</small>", ""
 
     debian_system = (

@@ -137,7 +137,67 @@ def _get_client_ip(request: Request) -> str:
 
 
 
+
+# === PATCH patch_kb_version.py: auto cache invalidation ===
+import hashlib as _pkv_hashlib
+from pathlib import Path as _pkv_Path
+
+_PKV_CACHE_VERSION_FILE = _pkv_Path("/app/data/cache_version.txt")
+
+def _pkv_kb_hash() -> str:
+    try:
+        payload = repr(sorted(DEFAULT_RULES.items()))
+    except Exception:
+        payload = "unknown"
+    ver = str(globals().get("VERSION_FALLBACK", "n/a"))
+    h = _pkv_hashlib.sha256()
+    h.update(payload.encode("utf-8", errors="replace"))
+    h.update(b"|")
+    h.update(ver.encode("utf-8", errors="replace"))
+    return h.hexdigest()[:16]
+
+def _pkv_check_and_clear_cache() -> None:
+    import sqlite3 as _pkv_sql
+    cur_ver = _pkv_kb_hash()
+    try:
+        if _PKV_CACHE_VERSION_FILE.exists():
+            old = _PKV_CACHE_VERSION_FILE.read_text(encoding="utf-8").strip()
+            if old == cur_ver:
+                print(f"[CACHE] KB unchanged (v={cur_ver}), skip")
+                return
+    except Exception:
+        pass
+    db_path = "/app/data/saas_audit.db"
+    try:
+        con = _pkv_sql.connect(db_path)
+        cur = con.cursor()
+        cur.execute("DELETE FROM ai_license_cache")
+        n = cur.rowcount
+        con.commit()
+        con.close()
+    except Exception as e:
+        print(f"[CACHE] clear failed: {e}")
+        return
+    try:
+        _PKV_CACHE_VERSION_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _PKV_CACHE_VERSION_FILE.write_text(cur_ver, encoding="utf-8")
+    except Exception as e:
+        print(f"[CACHE] version write failed: {e}")
+    print(f"[CACHE] KB changed -> cleared {n} entries -> v={cur_ver}")
+# === /PATCH patch_kb_version.py ===
 app = FastAPI(title="Платформа «Компонент-Эксперт» - ПП РФ № 1236", version=APP_VERSION)
+
+# === PATCH patch_kb_version.py: startup hook ===
+try:
+    @app.on_event("startup")
+    async def _pkv_startup_cache_check():
+        try:
+            _pkv_check_and_clear_cache()
+        except Exception as _e:
+            print(f"[CACHE] startup check failed: {_e}")
+except Exception as _e:
+    print(f"[CACHE] startup hook registration failed: {_e}")
+# === /PATCH patch_kb_version.py ===
 
 
 # ==========================================

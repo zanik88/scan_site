@@ -9,10 +9,23 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.2"
+VERSION_FALLBACK = "9.5.3"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.3",
+        "date": "2026-09-28",
+        "changes": [
+            "- Word-парсер: формат [License](url), ключ _license",
+            "- KB: Qt, zlib, Eigen, QuaZIP, JKQTPlotter (hard-match до ИИ)",
+            "- KB: ~45 компонентов (CMake, GCC, Go, LLVM, Python, PostgreSQL, glibc и др.)",
+            "- Фикс libarchive (ложный матч с hive)",
+            "- Авто-инвалидация ai_license_cache по хешу KB",
+            "- Fix: COOKIE_SECURE берётся из .env (устранён хардкод)",
+            "- Fix: восстановлен логин на проде (SECRET_KEY подхватывается из .env)",
+        ]
+    },
     {
         "version": "9.5.2",
         "date": "2026-09-28",

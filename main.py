@@ -145,32 +145,30 @@ from pathlib import Path as _pkv_Path
 _PKV_CACHE_VERSION_FILE = _pkv_Path("/app/data/cache_version.txt")
 
 def _pkv_kb_hash() -> str:
-    try:
-        payload = repr(sorted(DEFAULT_RULES.items()))
-    except Exception:
-        payload = "unknown"
-    ver = str(globals().get("VERSION_FALLBACK", "n/a"))
-    # v2: учитываем все hard-match блоки (маркеры PATCH patch_kb_*)
-    import inspect as _pkv_insp
+    # v3: хеш от нормализованного содержимого main.py
+    # (любые значимые изменения в коде/KB/hard-match → сброс кэша)
+    import re as _re
     _src = ""
     try:
-        _src = _pkv_insp.getsource(sys.modules[__name__])
+        with open(__file__, "r", encoding="utf-8", errors="replace") as _f:
+            _src = _f.read()
     except Exception:
         pass
-    hard_markers = ""
-    if _src:
-        for m in re.finditer(r'# === PATCH (patch_kb_[\w.]+) ===', _src):
-            hard_markers += m.group(1) + ";"
-        for m in re.finditer(r'_hard\d*\s*=\s*\{', _src):
-            hard_markers += "hard;"
-        for m in re.finditer(r'_clients\s*=\s*\{', _src):
-            hard_markers += "clients;"
+    # Нормализация: убираем комментарии и пустые строки, сжимаем пробелы
+    lines = []
+    for _ln in _src.splitlines():
+        _s = _ln.strip()
+        if not _s or _s.startswith("#"):
+            continue
+        # убираем inline-комментарии (грубо, но достаточно для хеша)
+        _s = _re.sub(r"\s+#.*$", "", _s)
+        lines.append(_s)
+    normalized = "\n".join(lines)
+    ver = str(globals().get("VERSION_FALLBACK", "n/a"))
     h = _pkv_hashlib.sha256()
-    h.update(payload.encode("utf-8", errors="replace"))
+    h.update(normalized.encode("utf-8", errors="replace"))
     h.update(b"|")
     h.update(ver.encode("utf-8", errors="replace"))
-    h.update(b"|")
-    h.update(hard_markers.encode("utf-8", errors="replace"))
     return h.hexdigest()[:16]
 
 def _pkv_check_and_clear_cache() -> None:
@@ -3337,7 +3335,25 @@ async def add_metrika(request: Request, call_next):
 
         # Вставляем метрику перед </head>
         if "</head>" in body and "mc.yandex.ru/metrika" not in body:
-            body = body.replace("</head>", METRIKA_SCRIPT + "\n</head>", 1)
+                        # === PATCH patch_mobile_css_v3.py ===
+            _mobile_css = (
+                "<style>"
+                "@media (max-width: 768px) {"
+                "  .nav { padding: 10px 0 !important; gap: 6px !important; font-size: 13px !important; }"
+                "  .nav-brand { font-size: 14px !important; }"
+                "  .card { padding: 20px 15px !important; margin: 10px 0 !important; }"
+                "  h1 { font-size: 22px !important; }"
+                "  h2 { font-size: 18px !important; }"
+                "  h3 { font-size: 16px !important; }"
+                "  body { padding: 10px !important; }"
+                "  .submit-btn { padding: 12px 20px !important; font-size: 14px !important; }"
+                "  input, button, select, textarea { font-size: 16px !important; }"
+                "  table { font-size: 12px !important; display: block; overflow-x: auto; }"
+                "}"
+                "</style>"
+            )
+            # === /PATCH patch_mobile_css_v3.py ===
+            body = body.replace("</head>", METRIKA_SCRIPT + _mobile_css + "\n</head>", 1)
             print(f"[METRIKA] Скрипт вставлен в {request.url.path}")
 
         # Формируем новый ответ

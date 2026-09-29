@@ -9,10 +9,20 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.4"
+VERSION_FALLBACK = "9.5.5"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.5",
+        "date": "2026-09-30",
+        "changes": [
+            "- Мобильная вёрстка: бургер-меню, скрытие разделителей |, адаптивные отступы",
+            "- patch_mobile_css_v6: динамическое определение отступа (_mobile_css на 12 пробелах)",
+            "- patch_burger_v1: замена 6 nav-обёрток на nav-burger + nav-links",
+            "- patch_burger_v2: обёртка 10 разделителей в span.nav-sep",
+        ]
+    },
     {
         "version": "9.5.4",
         "date": "2026-09-29",

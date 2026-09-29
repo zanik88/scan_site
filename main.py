@@ -150,10 +150,27 @@ def _pkv_kb_hash() -> str:
     except Exception:
         payload = "unknown"
     ver = str(globals().get("VERSION_FALLBACK", "n/a"))
+    # v2: учитываем все hard-match блоки (маркеры PATCH patch_kb_*)
+    import inspect as _pkv_insp
+    _src = ""
+    try:
+        _src = _pkv_insp.getsource(sys.modules[__name__])
+    except Exception:
+        pass
+    hard_markers = ""
+    if _src:
+        for m in re.finditer(r'# === PATCH (patch_kb_[\w.]+) ===', _src):
+            hard_markers += m.group(1) + ";"
+        for m in re.finditer(r'_hard\d*\s*=\s*\{', _src):
+            hard_markers += "hard;"
+        for m in re.finditer(r'_clients\s*=\s*\{', _src):
+            hard_markers += "clients;"
     h = _pkv_hashlib.sha256()
     h.update(payload.encode("utf-8", errors="replace"))
     h.update(b"|")
     h.update(ver.encode("utf-8", errors="replace"))
+    h.update(b"|")
+    h.update(hard_markers.encode("utf-8", errors="replace"))
     return h.hexdigest()[:16]
 
 def _pkv_check_and_clear_cache() -> None:
@@ -1462,6 +1479,7 @@ def _check_docker_package_status(name: str) -> tuple:
                 return rule["status"], rule.get("recommendation", "")
 
     # === PATCH patch_kb_qt.py: hard-match до ИИ ===
+        
         _name_norm = re.sub(r'\s+v?[\d][\d.]*.*$', '', name_lower).strip()
         _hard = {
             "qt":          ("⚠️ Требует внимания", "Copyleft. Проприетарное ПО: динамическая линковка или коммерческая лицензия Qt."),
@@ -2457,6 +2475,32 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
                                           report_id, ai_provider="auto", pre_license=None) -> dict:
     search_clean = sanitize_string(package_name)
 
+    # === PATCH patch_kb_clients_v2.py: hard-match клиентских библиотек ===
+    _clients = {
+            "predis": ("MIT", "Разрешено", "MIT License. PHP-клиент Redis."),
+            "redis-py": ("MIT", "Разрешено", "MIT License. Python-клиент Redis."),
+            "redis py": ("MIT", "Разрешено", "MIT License. Python-клиент Redis."),
+            "hiredis": ("BSD-3-Clause", "Разрешено", "BSD 3-Clause. C-клиент Redis."),
+            "jedis": ("MIT", "Разрешено", "MIT License. Java-клиент Redis."),
+            "lettuce": ("Apache-2.0", "Разрешено", "Apache 2.0. Java-клиент Redis."),
+            "pymongo": ("Apache-2.0", "Разрешено", "Apache 2.0. Python-драйвер MongoDB."),
+            "mongoengine": ("MIT", "Разрешено", "MIT License. ODM для MongoDB."),
+            "mongodb-driver": ("Apache-2.0", "Разрешено", "Apache 2.0. Официальный драйвер MongoDB."),
+            "mongodb driver": ("Apache-2.0", "Разрешено", "Apache 2.0."),
+            "firebird-driver": ("IPL / BSD", "Разрешено", "IPL / BSD. Драйвер Firebird."),
+            "firebird driver": ("IPL / BSD", "Разрешено", "IPL / BSD."),
+            "jaeger-client": ("Apache-2.0", "Разрешено", "Apache 2.0. Jaeger-клиент."),
+            "jaeger client": ("Apache-2.0", "Разрешено", "Apache 2.0."),
+            "opentracing": ("Apache-2.0", "Разрешено", "Apache 2.0."),
+    }
+    _cli_norm = re.sub(r'\s+v?[\d][\d.]*.*$', '', search_clean).strip()
+    if _cli_norm in _clients:
+        _lic, _st, _rec = _clients[_cli_norm]
+        return {"name": package_name, "version": table_version,
+                "license": _lic,
+                "status": f"✅ {_st} <br><small style='color:#2f855a;'>💡 {_rec}</small>"}
+    # === /PATCH patch_kb_clients_v2.py ===
+
     # === PATCH patch_libarchive_fix.py ===
     # libarchive заканчивается на "hive" -> ложный матч с Apache Hive
     _la_norm = re.sub(r'\s+v?[\d][\d.]*.*$', '', search_clean).strip()
@@ -2541,13 +2585,13 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
                 "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 Fluent Bit / Fluentd — Apache-2.0</small>"}
 
     # Jaeger
-    if "jaeger" in search_clean:
+    if re.search(r'\bjaeger\b', search_clean):
         return {"name": package_name, "version": table_version,
                 "license": "Apache-2.0",
                 "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 Jaeger — Apache-2.0</small>"}
 
     # Oracle MySQL — различаем Community (разрешено) и Commercial (запрещено)
-    if "mysql" in search_clean:
+    if re.search(r'\bmysql\b', search_clean):
         if "community" in search_clean:
             return {"name": package_name, "version": table_version,
                     "license": "GPL-2.0",
@@ -2571,7 +2615,7 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         ("oracle database", "Oracle Database"),
     ]
     for key, label in banned_db:
-        if key in search_clean:
+        if re.search(r'\b' + re.escape(key) + r'\b', search_clean):
             return {"name": package_name, "version": table_version,
                     "license": "Commercial / Proprietary",
                     "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}. Замена: Postgres Pro / MariaDB</small>"}
@@ -2586,7 +2630,7 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         ("zend server", "RogueWave Zend Server"),
     ]
     for key, label in banned_app_servers:
-        if key in search_clean:
+        if re.search(r'\b' + re.escape(key) + r'\b', search_clean):
             return {"name": package_name, "version": table_version,
                     "license": "Commercial / Proprietary",
                     "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}. Замена: WildFly / TomEE</small>"}
@@ -2598,7 +2642,7 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         ("lotus notes", "IBM Lotus Notes"),
     ]
     for key, label in banned_platforms:
-        if key in search_clean:
+        if re.search(r'\b' + re.escape(key) + r'\b', search_clean):
             return {"name": package_name, "version": table_version,
                     "license": "Commercial / Proprietary",
                     "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}.</small>"}
@@ -2611,7 +2655,7 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         ("sles", "SUSE Linux Enterprise Server"),
     ]
     for key, label in banned_os:
-        if key in search_clean:
+        if re.search(r'\b' + re.escape(key) + r'\b', search_clean):
             return {"name": package_name, "version": table_version,
                     "license": "Commercial / Proprietary",
                     "status": f"❌ Запрещено <br><small style='color:#e53e3e;'>💡 {label}. Замена: Astra Linux / ALT Linux</small>"}
@@ -2625,7 +2669,7 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         ("resin", "Resin", "GPL / Commercial"),
     ]
     for key, label, lic in allowed_app_servers:
-        if key in search_clean:
+        if re.search(r'\b' + re.escape(key) + r'\b', search_clean):
             return {"name": package_name, "version": table_version,
                     "license": lic,
                     "status": f"✅ Разрешено <br><small style='color:#2f855a;'>💡 {label} — открытая лицензия</small>"}
@@ -2645,19 +2689,19 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         ("enhydra", "Enhydra Server", "Open Source"),
     ]
     for key, label, lic in allowed_db_app:
-        if key in search_clean:
+        if re.search(r'\b' + re.escape(key) + r'\b', search_clean):
             return {"name": package_name, "version": table_version,
                     "license": lic,
                     "status": f"✅ Разрешено <br><small style='color:#2f855a;'>💡 {label} — открытая лицензия</small>"}
 
     # Oracle MySQL Community (открытая) vs Commercial (запрещена)
-    if "mysql" in search_clean and "community" in search_clean:
+    if re.search(r'\bmysql\b', search_clean) and "community" in search_clean:
         return {"name": package_name, "version": table_version,
                 "license": "GPL-2.0",
                 "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 MySQL Community Edition — открытая лицензия</small>"}
 
     # Разрешённые СУБД (open-source из таблицы Минцифры)
-    if "firebird" in search_clean:
+    if re.search(r'\bfirebird\b', search_clean):
         return {"name": package_name, "version": table_version,
                 "license": "Interbase Public License",
                 "status": "✅ Разрешено <br><small style='color:#2f855a;'>💡 Firebird — открытая лицензия</small>"}
@@ -2696,7 +2740,7 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
         "динамика jdk": ("Commercial / Для КИИ", "✅ Разрешено (Российское ПО)", "Динамика JDK (реестр №31332)"),
     }
     for rus_key, (lic, st, rec) in rus_software.items():
-        if re.search(r'\b' + re.escape(rus_key) + r'\b', search_clean) or rus_key in search_clean:
+        if re.search(r'\b' + re.escape(rus_key) + r'\b', search_clean):
             return {"name": package_name, "version": table_version, "license": lic,
                     "status": f"{st} <br><small style='color:#2f855a;'>🇷🇺 {rec}</small>"}
 
@@ -2709,10 +2753,10 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
                 "license": "GPL-2.0 with CE / Proprietary",
                 "status": "⚠️ Требует внимания <br><small style='color:#dd6b20;'>💡 Liberica JDK (№5493), Axiom JDK (№17783) или Динамика JDK (№31332)</small>"}
 
-    if "mongodb" in search_clean:
+    if re.search(r'\bmongodb\b', search_clean):
         return {"name": package_name, "version": table_version, "license": "SSPL",
                 "status": "⚠️ Требует внимания <br><small style='color:#dd6b20;'>💡 SSPL. Замена: PostgresPro</small>"}
-    if "redis" in search_clean and "valkey" not in search_clean:
+    if re.search(r'\bredis\b', search_clean) and "valkey" not in search_clean:
         return {"name": package_name, "version": table_version,
                 "license": "RSALv2 / SSPL / BSD (до 7.2)",
                 "status": "⚠️ Требует внимания <br><small style='color:#dd6b20;'>💡 С 7.4 — SSPL/RSALv2. Замена: Valkey</small>"}

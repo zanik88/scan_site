@@ -9,10 +9,21 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.3"
+VERSION_FALLBACK = "9.5.4"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.4",
+        "date": "2026-09-29",
+        "changes": [
+            "- Профилактика матчинга: word-boundary (устранены коллизии libarchive/hive, django/go, predis/redis)",
+            "- KB для клиентских библиотек: redis-py, predis, pymongo, mongodb-driver, firebird-driver, jaeger-client и др.",
+            "- patch_kb_version v3: хеш от содержимого main.py",
+            "- Фикс лицензий: _hard_all в главной функции (license, status, recommendation)",
+            "- Мобильная вёрстка: @media (max-width: 768px) через middleware",
+        ]
+    },
     {
         "version": "9.5.3",
         "date": "2026-09-28",

@@ -3335,24 +3335,41 @@ async def add_metrika(request: Request, call_next):
 
         # Вставляем метрику перед </head>
         if "</head>" in body and "mc.yandex.ru/metrika" not in body:
-                        # === PATCH patch_mobile_css_v3.py ===
+                        # === PATCH patch_mobile_css_v6.py ===
             _mobile_css = (
                 "<style>"
                 "@media (max-width: 768px) {"
-                "  .nav { padding: 10px 0 !important; gap: 6px !important; font-size: 13px !important; }"
-                "  .nav-brand { font-size: 14px !important; }"
-                "  .card { padding: 20px 15px !important; margin: 10px 0 !important; }"
+                "  body { padding: 10px !important; }"
+                "  .nav { padding: 10px 0 !important; gap: 4px !important; }"
+                "  .nav-brand { font-size: 13px !important; flex-shrink: 0 !important; }"
+                "  .nav > div:last-child { display: flex !important; flex-wrap: nowrap !important;"
+                "    overflow-x: auto !important; gap: 10px !important; width: 100% !important;"
+                "    -webkit-overflow-scrolling: touch; scrollbar-width: none; }"
+                "  .nav > div:last-child::-webkit-scrollbar { display: none; }"
+                "  .nav > div:last-child > a { white-space: nowrap !important; flex-shrink: 0 !important; font-size: 13px !important; }"
+                "  .card { padding: 18px 14px !important; margin: 8px 0 !important; }"
                 "  h1 { font-size: 22px !important; }"
                 "  h2 { font-size: 18px !important; }"
                 "  h3 { font-size: 16px !important; }"
-                "  body { padding: 10px !important; }"
                 "  .submit-btn { padding: 12px 20px !important; font-size: 14px !important; }"
                 "  input, button, select, textarea { font-size: 16px !important; }"
                 "  table { font-size: 12px !important; display: block; overflow-x: auto; }"
                 "}"
-                "</style>"
+    
+            "  .nav-burger { display: none; }"
+            "  @media (max-width: 768px) {"
+            "    .nav-burger { display: block !important; font-size: 24px; }"
+            "    .nav-links { display: none !important; flex-direction: column !important; width: 100% !important; gap: 12px !important; padding-top: 10px !important; }"
+            "    .nav-links.active { display: flex !important; }"
+            "  }"
+            "  .nav-sep { display: inline; }"
+            "  @media (max-width: 768px) {"
+            "    .nav-sep { display: none !important; }"
+            "  }"
+            "</style>"
             )
-            # === /PATCH patch_mobile_css_v3.py ===
+            
+
             body = body.replace("</head>", METRIKA_SCRIPT + _mobile_css + "\n</head>", 1)
             print(f"[METRIKA] Скрипт вставлен в {request.url.path}")
 
@@ -3391,18 +3408,18 @@ def _build_nav(user: Optional[User]) -> str:
     feedback_link = "<a href='/feedback' style='color:#3182ce;text-decoration:none;font-weight:600;'>📮 Обратная связь</a>"
     about_link = "<a href='/about' style='color:#3182ce;text-decoration:none;font-weight:600;'>ℹ️ О сервисе</a>"
     if user:
-        admin_link = " | <a href='/admin' style='color:#e53e3e;font-weight:700;text-decoration:none;'>Панель администратора</a>" if user.role == "admin" else ""
+        admin_link = "<span class='nav-sep'> | </span><a href='/admin' style='color:#e53e3e;font-weight:700;text-decoration:none;'>Панель администратора</a>" if user.role == "admin" else ""
         return (f"<span style='color:#2d3748;'>👤 <b>{user.email}</b> <span style='color:#718096;font-size:12px;'>({user.role})</span></span>"
-                f" | <a href='/dashboard' style='color:#3182ce;text-decoration:none;font-weight:600;'>Личный кабинет</a>"
-                f"{admin_link} | <a href='/pricing' style='color:#3182ce;text-decoration:none;font-weight:600;'>Тарифы</a>"
-                f" | {feedback_link}"
-                f" | {about_link}"
-                f" | <a href='/logout' style='color:#718096;text-decoration:none;'>Выйти</a>")
+                f"<span class='nav-sep'> | </span><a href='/dashboard' style='color:#3182ce;text-decoration:none;font-weight:600;'>Личный кабинет</a>"
+                f"{admin_link}<span class='nav-sep'> | </span><a href='/pricing' style='color:#3182ce;text-decoration:none;font-weight:600;'>Тарифы</a>"
+                f"<span class='nav-sep'> | </span>{feedback_link}"
+                f"<span class='nav-sep'> | </span>{about_link}"
+                f"<span class='nav-sep'> | </span><a href='/logout' style='color:#718096;text-decoration:none;'>Выйти</a>")
     return ("<a href='/login' style='color:#3182ce;text-decoration:none;font-weight:600;'>Вход</a>"
-            " | <a href='/register' style='background:#3182ce;color:white;padding:6px 14px;border-radius:4px;text-decoration:none;font-weight:600;'>Регистрация</a>"
-            " | <a href='/pricing' style='color:#3182ce;text-decoration:none;font-weight:600;'>Тарифы</a>"
-            f" | {feedback_link}"
-            f" | {about_link}")
+            "<span class='nav-sep'> | </span><a href='/register' style='background:#3182ce;color:white;padding:6px 14px;border-radius:4px;text-decoration:none;font-weight:600;'>Регистрация</a>"
+            "<span class='nav-sep'> | </span><a href='/pricing' style='color:#3182ce;text-decoration:none;font-weight:600;'>Тарифы</a>"
+            f"<span class='nav-sep'> | </span>{feedback_link}"
+            f"<span class='nav-sep'> | </span>{about_link}")
 
 
 def _free_plan_banner(user: Optional[User], request: Optional[Request]) -> str:
@@ -3553,7 +3570,7 @@ async def index(request: Request, user: User = Depends(get_current_user)):
         .submit-btn:hover {{ background: linear-gradient(135deg, #2f855a 0%, #276749 100%); box-shadow: 0 6px 16px rgba(47,133,90,0.35); transform: translateY(-1px); }}
         .submit-btn:active {{ transform: translateY(0); box-shadow: 0 2px 6px rgba(47,133,90,0.25); }}
     </style></head><body>
-    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div>{_build_nav(user)}</div></div>
+    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div class="nav-burger" onclick="document.querySelector('.nav-links')?.classList.toggle('active')" style="cursor:pointer;font-size:24px;line-height:1;">☰</div><div class="nav-links">{_build_nav(user)}</div></div>
     <div class="card">
         <h1>Платформа «Компонент-Эксперт»</h1>
         <p style="text-align: center; color: #4a5568; margin-bottom: 20px;">Автоматизированный аудит ПО на соответствие ПП РФ № 1236</p>
@@ -3823,7 +3840,7 @@ async def feedback_page(user: User = Depends(get_current_user)):
         button {{ background: #2f855a; color: white; border: none; padding: 14px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: 600; margin-top: 22px; }}
         button:hover {{ background: #276749; }}
     </style></head><body>
-    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div>{_build_nav(user)}</div></div>
+    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div class="nav-burger" onclick="document.querySelector('.nav-links')?.classList.toggle('active')" style="cursor:pointer;font-size:24px;line-height:1;">☰</div><div class="nav-links">{_build_nav(user)}</div></div>
 
     <div class="card">
         <h1 style="margin-top:0;">📮 Обратная связь</h1>
@@ -3937,7 +3954,7 @@ async def pricing_page(user: User = Depends(get_current_user)):
     .btn{{display:block;text-align:center;background:#3182ce;color:white;padding:10px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;border:none;cursor:pointer;}}
     .btn-free{{background:#718096;}} .btn-dev{{background:#cbd5e0;color:#718096;cursor:not-allowed;}}
     </style></head><body>
-    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div>{_build_nav(user)}</div></div>
+    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div class="nav-burger" onclick="document.querySelector('.nav-links')?.classList.toggle('active')" style="cursor:pointer;font-size:24px;line-height:1;">☰</div><div class="nav-links">{_build_nav(user)}</div></div>
     <h1 style="text-align:center;color:#1a365d;">Тарифные планы</h1>
     <p style="text-align:center;color:#718096;">Бесплатный план: {FREE_CHECKS_LIMIT} проверок, до {FREE_COMPONENTS_LIMIT} компонентов в отчёте</p>
     <div class="grid">
@@ -4008,7 +4025,7 @@ async def dashboard(user: User = Depends(get_current_user), db: Session = Depend
     .card{{background:white;padding:35px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.05);border-top:4px solid #1a365d;}}
     table{{width:100%;border-collapse:collapse;}} th{{background:#1a365d;color:white;padding:12px;text-align:left;}}</style>
     </head><body>
-    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div>{_build_nav(user)}</div></div>
+    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div class="nav-burger" onclick="document.querySelector('.nav-links')?.classList.toggle('active')" style="cursor:pointer;font-size:24px;line-height:1;">☰</div><div class="nav-links">{_build_nav(user)}</div></div>
     <div class="card">
     <h2 style="margin-top:0;">Личный кабинет</h2>
     <p><b>Организация:</b> {user.company_name} | <b>Email:</b> {user.email}</p>
@@ -4367,7 +4384,7 @@ async def about_page(user: User = Depends(get_current_user)):
         .tech span {{ background: #edf2f7; padding: 4px 12px; border-radius: 12px; font-size: 13px; color: #2d3748; }}
         a {{ color: #3182ce; }}
     </style></head><body>
-    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div>{_build_nav(user)}</div></div>
+    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт</div><div class="nav-burger" onclick="document.querySelector('.nav-links')?.classList.toggle('active')" style="cursor:pointer;font-size:24px;line-height:1;">☰</div><div class="nav-links">{_build_nav(user)}</div></div>
 
     <div class="card">
         <h1>О сервисе <span class="version-badge">v{info['version']}</span></h1>
@@ -4528,7 +4545,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
     .stat{{background:#edf2f7;padding:15px 25px;border-radius:6px;flex:1;min-width:180px;border-left:4px solid #3182ce;}}
     .stat h4{{margin:0;color:#4a5568;font-size:13px;}} .stat p{{margin:5px 0 0 0;font-size:22px;font-weight:bold;color:#1a365d;}}
     </style></head><body>
-    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт — Админ</div><div>{_build_nav(user)}</div></div>
+    <div class="nav"><div class="nav-brand">🛡️ Компонент-Эксперт — Админ</div><div class="nav-burger" onclick="document.querySelector('.nav-links')?.classList.toggle('active')" style="cursor:pointer;font-size:24px;line-height:1;">☰</div><div class="nav-links">{_build_nav(user)}</div></div>
     <div class="card">
     <h2 style="margin-top:0;">👑 Панель администратора</h2>
     <div class="stats">

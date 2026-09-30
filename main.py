@@ -2491,10 +2491,6 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                 extracted.append({"name": name, "version": ver})
         else:
             text = file_bytes.decode("utf-8", errors="ignore")
-            # === PATCH patch_csv_parser.py ===
-            # Поддержка запятых и точек с запятой как разделителей:
-            text = text.replace(";", "\n").replace(",", "\n")
-            # === /PATCH patch_csv_parser.py ===
             for line in text.splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
@@ -3350,10 +3346,10 @@ FILE_UPLOAD_HTML = """
                 <span style="font-size: 22px;">✏️</span>
                 <div>
                     <div style="font-size: 15px; font-weight: 700; color: #2d3748;">Способ 2: Текст</div>
-                    <div style="font-size: 11px; color: #718096;">Список: имя==версия (через запятую, точку с запятой или с новой строки)</div>
+                    <div style="font-size: 11px; color: #718096;">Список вида имя==версия</div>
                 </div>
             </div>
-            <textarea name="text_input" maxlength="500" placeholder="fastapi==0.115.6, pandas==2.2.3;&#10;sqlalchemy==2.0.35, numpy" style="width: 100%; min-height: 100px; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; resize: vertical; box-sizing: border-box; background: #f8fafc; line-height: 1.5;"></textarea>
+            <textarea name="text_input" maxlength="500" placeholder="fastapi==0.115.6&#10;pandas==2.2.3&#10;sqlalchemy==2.0.35" style="width: 100%; min-height: 100px; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; resize: vertical; box-sizing: border-box; background: #f8fafc; line-height: 1.5;"></textarea>
         </div>
 
     </div>
@@ -4708,7 +4704,8 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
         users_html += f"<tr><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.id}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.company_name}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{u.email}{test_badge}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'><b>{u.role}</b></td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{plan_selector} {checks_info}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{status_badge}</td><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{actions}</td></tr>"
 
     reports_html = "".join([
-        f"<tr><td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.id}</td>"
+        f"<tr><td style='padding:10px;border-bottom:1px solid #e2e8f0;'><input type='checkbox' class='report-cb' value='{r.id}'></td>"
+        f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.id}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.owner.email if r.owner else '—'}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.filename}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.cve_count or 0}</td>"
@@ -4841,7 +4838,11 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
 
     <div class="card" style="overflow-x:auto;">
     <h3 style="margin-top:0;">Все проверки ({len(all_reports)})</h3>
-    <table><tr><th>ID</th><th>Владелец</th><th>Файл</th><th>CVE</th><th>Дата</th><th>Действие</th></tr>{reports_html if reports_html else '<tr><td colspan="6" style="padding:20px;text-align:center;">Нет проверок</td></tr>'}</table>
+<div style="margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap;">
+  <button onclick="deleteSelectedReports()" style="background:#e53e3e;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">🗑 Удалить выбранные</button>
+  <button onclick="deleteAllReports()" style="background:#742a2a;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">🗑 Удалить ВСЕ отчёты</button>
+</div>
+    <table><tr><th style="width:30px;"><input type="checkbox" id="selAllReports"></th><th>ID</th><th>Владелец</th><th>Файл</th><th>CVE</th><th>Дата</th><th>Действие</th></tr>{reports_html if reports_html else '<tr><td colspan="7" style="padding:20px;text-align:center;">Нет проверок</td></tr>'}</table>
     </div>
 
     <div class="card">
@@ -4885,7 +4886,28 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
         await fetch('/admin/delete-user', {{method:'POST', body: fd}});
         location.reload();
     }}
-    async function delReport(rid) {{
+    async function deleteSelectedReports() {{
+  const boxes = document.querySelectorAll('.report-cb:checked');
+  if (boxes.length === 0) {{ alert('Ничего не выбрано'); return; }}
+  if (!confirm('Удалить выбранные отчёты (' + boxes.length + ')?')) return;
+  const ids = Array.from(boxes).map(b => b.value).join(',');
+  const fd = new FormData(); fd.append('ids', ids);
+  await fetch('/admin/reports/delete-selected', {{method:'POST', body: fd}});
+  location.reload();
+}}
+async function deleteAllReports() {{
+  if (!confirm('УДАЛИТЬ ВСЕ ОТЧЁТЫ? Это необратимо!')) return;
+  if (!confirm('Точно? Последнее предупреждение.')) return;
+  await fetch('/admin/reports/delete-all', {{method:'POST'}});
+  location.reload();
+}}
+document.addEventListener('DOMContentLoaded', function() {{
+  const selAll = document.getElementById('selAllReports');
+  if (selAll) selAll.addEventListener('change', function() {{
+    document.querySelectorAll('.report-cb').forEach(cb => cb.checked = selAll.checked);
+  }});
+}});
+async function delReport(rid) {{
         if (!confirm('Удалить отчёт #' + rid + '?')) return;
         await fetch('/reports/delete/' + rid, {{method:'POST'}});
         location.reload();
@@ -4902,6 +4924,56 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
     </script>
     </body></html>
     """)
+
+
+# === PATCH patch_admin_reports.py: роуты массового удаления ===
+@app.post("/admin/reports/delete-selected")
+async def admin_reports_delete_selected(request: Request, ids: str = Form(""), db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        return RedirectResponse("/login", status_code=303)
+    id_list = [int(x) for x in ids.split(",") if x.strip().isdigit()]
+    removed = 0
+    for rid in id_list:
+        r = db.query(AuditReport).filter(AuditReport.id == rid).first()
+        if r:
+            if r.excel_filename:
+                fp = os.path.join(PDF_DIR, r.excel_filename)
+                if os.path.exists(fp):
+                    try: os.remove(fp)
+                    except: pass
+            db.delete(r)
+            removed += 1
+    db.commit()
+    try:
+        log_action(user, "admin_reports_delete", request, db, count=removed, mode="selected")
+    except Exception as _e:
+        print(f"[LOG_ACTION] admin_reports_delete: {_e}")
+    return RedirectResponse("/admin", status_code=303)
+
+
+@app.post("/admin/reports/delete-all")
+async def admin_reports_delete_all(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        return RedirectResponse("/login", status_code=303)
+    all_r = db.query(AuditReport).all()
+    removed = 0
+    for r in all_r:
+        if r.excel_filename:
+            fp = os.path.join(PDF_DIR, r.excel_filename)
+            if os.path.exists(fp):
+                try: os.remove(fp)
+                except: pass
+        db.delete(r)
+        removed += 1
+    db.commit()
+    try:
+        log_action(user, "admin_reports_delete", request, db, count=removed, mode="all")
+    except Exception as _e:
+        print(f"[LOG_ACTION] admin_reports_delete_all: {_e}")
+    return RedirectResponse("/admin", status_code=303)
+# === /PATCH patch_admin_reports.py ===
 
 
 @app.post("/admin/set-plan")

@@ -2364,6 +2364,55 @@ def _is_section_header(line: str) -> bool:
     return any(lower.startswith(h) for h in headers)
 
 
+# === PATCH patch_excel_filter ===
+_EXCEL_HEADER_STOP = {
+    "компонент", "название", "лицензия", "описание", "ссылка", "ссылка на",
+    "тип", "комментарий", "версия", "статус", "категория", "наименование",
+    "сведения", "реквизиты", "информация", "наименование компонента",
+    "компоненты", "список", "таблица",
+}
+_EXCEL_PREFIX_STOP = (
+    "бесплатн", "фреймворк", "транспил", "паттерн", "библиотек", "инструмент",
+    "пакет", "продукт", "система", "кроссплат", "ссылка на", "описание",
+    "название", "комментарий", "лицензия", "тип ",
+)
+_LICENSE_ONLY = {
+    "mit", "apache", "apache-2.0", "apache 2.0", "bsd", "gpl", "lgpl",
+    "agpl", "sspl", "mpl", "epl", "cddl", "isc", "zlib", "unlicense",
+    "public domain", "proprietary", "gplv2", "gplv3", "lgplv2", "lgplv3",
+    "agplv3", "mit license", "epl 2.0", "epl-2.0",
+}
+
+def _is_bad_excel_name(name):
+    """Фильтр мусорных строк из Excel/DOCX (шапки, описания, лицензии)."""
+    if not name:
+        return True
+    n = str(name).strip().strip('"').strip("'").strip()
+    if not n:
+        return True
+    low = n.lower()
+    if low in _EXCEL_HEADER_STOP:
+        return True
+    for p in _EXCEL_PREFIX_STOP:
+        if low.startswith(p):
+            return True
+    if "|" in n:
+        return True
+    if len(n) > 40:
+        return True
+    if low in _LICENSE_ONLY:
+        return True
+    first_word = low.split()[0] if low.split() else ""
+    if first_word in _LICENSE_ONLY and len(n) < 25:
+        return True
+    has_cyr = any('\u0400' <= c <= '\u04FF' for c in n)
+    has_lat = any('a' <= c.lower() <= 'z' for c in n)
+    if has_cyr and not has_lat and len(n) > 4:
+        return True
+    return False
+# === /PATCH patch_excel_filter ===
+
+
 def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
     extracted = []
     ext = filename.split(".")[-1].lower() if "." in filename else ""
@@ -2377,7 +2426,7 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                     if row_vals:
                         name = row_vals[0]
                         ver = row_vals[1] if len(row_vals) > 1 else "unknown"
-                        if not _is_garbage_component(name):
+                        if not _is_garbage_component(name) and not _is_bad_excel_name(name):
                             extracted.append({"name": name, "version": ver})
         elif ext == "docx":
             doc = docx.Document(io.BytesIO(file_bytes))
@@ -2388,7 +2437,7 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                     if row_vals:
                         name = row_vals[0]
                         ver = row_vals[1] if len(row_vals) > 1 else "unknown"
-                        if not _is_garbage_component(name):
+                        if not _is_garbage_component(name) and not _is_bad_excel_name(name):
                             extracted.append({"name": name, "version": ver})
             # Обработка параграфов с поддержкой лицензий
             for p in doc.paragraphs:
@@ -2515,7 +2564,7 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
 
                 # Обычный формат "name==version"
                 name, ver = _split_name_version(line)
-                if not _is_garbage_component(name):
+                if not _is_garbage_component(name) and not _is_bad_excel_name(name):
                     extracted.append({"name": name, "version": ver})
     except Exception as e:
         print(f"Parse error {filename}: {e}")

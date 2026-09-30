@@ -1758,6 +1758,8 @@ class Feedback(Base):
     message = Column(Text, nullable=False)
     page_url = Column(String, nullable=True)
     is_read = Column(Boolean, default=False)
+    admin_reply = Column(Text, nullable=True)  # PATCH patch_feedback_reply
+    replied_at = Column(DateTime, nullable=True)  # PATCH patch_feedback_reply
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -1775,7 +1777,79 @@ class AILicenseCache(Base):
     last_used = Column(DateTime, default=datetime.utcnow)
 
 
+# === PATCH patch_action_log.py ===
+class UserAction(Base):
+    __tablename__ = "user_actions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    email = Column(String, nullable=True, index=True)
+    action = Column(String, nullable=False, index=True)
+    path = Column(String, nullable=True)
+    method = Column(String, nullable=True)
+    ip = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    details = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+def log_action(user, action, request=None, db=None, **details):
+    """Безопасная запись действия пользователя. Не ломает основной поток."""
+    import json as _json
+    try:
+        own_db = False
+        if db is None:
+            db = SessionLocal()
+            own_db = True
+        ip = None
+        ua = None
+        path = None
+        method = None
+        if request is not None:
+            ip = request.client.host if request.client else None
+            ua = request.headers.get("user-agent", "")[:300]
+            path = request.url.path
+            method = request.method
+        db.add(UserAction(
+            user_id=user.id if user else None,
+            email=user.email if user else None,
+            action=action,
+            path=path,
+            method=method,
+            ip=ip,
+            user_agent=ua,
+            details=_json.dumps(details, ensure_ascii=False)[:2000] if details else None,
+        ))
+        db.commit()
+        if own_db:
+            db.close()
+    except Exception as e:
+        print(f"[ACTION] log error: {e}")
+        try:
+            db.rollback()
+            if own_db:
+                db.close()
+        except Exception:
+            pass
+# === /PATCH patch_action_log.py ===
+
+
 Base.metadata.create_all(bind=engine)
+
+# === PATCH patch_feedback_reply.py: миграция ===
+try:
+    from sqlalchemy import text as _sa_text
+    with engine.connect() as _conn:
+        for _col, _type in [("admin_reply", "TEXT"), ("replied_at", "DATETIME")]:
+            try:
+                _conn.execute(_sa_text(f"ALTER TABLE feedback ADD COLUMN {_col} {_type}"))
+                _conn.commit()
+            except Exception:
+                _conn.rollback()
+    print("[MIGRATION] feedback: admin_reply, replied_at OK")
+except Exception as _e:
+    print(f"[MIGRATION] feedback: {_e}")
+# === /PATCH patch_feedback_reply.py ===
+
 
 
 def run_migrations():
@@ -3397,8 +3471,42 @@ async def log_visits(request: Request, call_next):
             ip = request.client.host if request.client else "unknown"
             db.add(VisitLog(path=request.url.path, ip_address=ip))
             db.commit()
-        except Exception:
-            pass
+
+            # === PATCH patch_action_log.py: логирование действий ===
+            _action = None
+            _p = request.url.path
+            _m = request.method
+            if _p == "/login" and _m == "POST":
+                _action = "login"
+            elif _p == "/register" and _m == "POST":
+                _action = "register"
+            elif _p == "/upload" and _m == "POST":
+                _action = "audit_start"
+            elif _p.startswith("/download/") or _p.startswith("/reports/download"):
+                _action = "report_download"
+            elif _p == "/feedback" and _m == "POST":
+                _action = "feedback_sent"
+            elif _p.startswith("/reports/delete/"):
+                _action = "report_delete"
+            elif _p.startswith("/admin/") and _m == "POST":
+                _action = "admin_" + _p.replace("/admin/", "").split("/")[0]
+            if _action:
+                _ua = request.headers.get("user-agent", "")[:300]
+                db.add(UserAction(
+                    action=_action,
+                    path=_p,
+                    method=_m,
+                    ip=ip,
+                    user_agent=_ua,
+                ))
+                db.commit()
+            # === /PATCH patch_action_log.py ===
+        except Exception as _e:
+            print(f"[ACTION] middleware error: {_e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
         finally:
             db.close()
     return response
@@ -3992,6 +4100,43 @@ async def upgrade_to_pro(user: User = Depends(get_current_user), db: Session = D
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
 
+def _user_feedback_html(user, db):
+    """PATCH patch_feedback_reply — блок «Мои обращения» в кабинете."""
+    rows = []
+    try:
+        q = db.query(Feedback).filter(Feedback.email == user.email).order_by(Feedback.created_at.desc()).limit(20).all()
+        for fb in q:
+            reply_html = ""
+            if fb.admin_reply:
+                reply_html = (
+                    '<div style="margin-top:6px;padding:6px 10px;background:#f0fff4;'
+                    'border-left:3px solid #38a169;font-size:12px;">'
+                    '<b>Ответ администрации:</b><br>' + fb.admin_reply + '</div>'
+                )
+            rows.append(
+                '<tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;'
+                'font-size:12px;white-space:nowrap;">' + fb.created_at.strftime("%Y-%m-%d %H:%M") + '</td>'
+                '<td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:12px;">'
+                '<b>' + (fb.subject or "—") + '</b><br>' + fb.message + reply_html + '</td></tr>'
+            )
+    except Exception as _e:
+        print(f"[USER_FEEDBACK] {_e}")
+        return ""
+    if not rows:
+        return (
+            '<div class="card" style="border-top-color:#805ad5;margin-top:20px;">'
+            '<h3 style="margin-top:0;">📩 Мои обращения</h3>'
+            '<p style="color:#718096;font-size:13px;">У вас пока нет обращений. '
+            '<a href="/feedback">Написать</a></p></div>'
+        )
+    return (
+        '<div class="card" style="border-top-color:#805ad5;margin-top:20px;">'
+        '<h3 style="margin-top:0;">📩 Мои обращения</h3>'
+        '<table style="width:100%;border-collapse:collapse;">'
+        + "".join(rows) + '</table></div>'
+    )
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not user:
@@ -4036,7 +4181,8 @@ async def dashboard(user: User = Depends(get_current_user), db: Session = Depend
         {FILE_UPLOAD_HTML}
         <button type="submit" style="background:#2f855a;color:white;padding:12px 32px;border:none;border-radius:4px;cursor:pointer;margin-top:10px;font-weight:600;">🚀 Загрузить и проверить</button>
     </form>
-    <h3 style="margin-top:30px;">Архив проверок</h3>
+    {_user_feedback_html(user, db)}
+<h3 style="margin-top:30px;">Архив проверок</h3>
     <table><tr><th>Файл</th><th>Дата</th><th>Excel</th><th>Действие</th></tr>{rows if rows else "<tr><td colspan='4' style='padding:20px;text-align:center;'>История пуста</td></tr>"}</table>
     </div>{FOOTER_HTML}</body></html>
     """)
@@ -4431,6 +4577,59 @@ async def download_excel(filename: str):
     return HTMLResponse("Файл не найден", status_code=404)
 
 
+# === PATCH patch_admin_actions.py ===
+@app.get("/admin/actions")
+async def admin_actions(request: Request, action: str = "", email: str = "", db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        return RedirectResponse("/login", status_code=303)
+
+    q = db.query(UserAction).order_by(UserAction.id.desc())
+    if action:
+        q = q.filter(UserAction.action == action)
+    if email:
+        q = q.filter(UserAction.email.ilike(f"%{email}%"))
+    actions = q.limit(500).all()
+
+    rows = ""
+    for a in actions:
+        rows += (
+            f"<tr>"
+            f"<td>{a.id}</td>"
+            f"<td>{a.created_at}</td>"
+            f"<td>{a.email or ''}</td>"
+            f"<td>{a.action}</td>"
+            f"<td>{a.method}</td>"
+            f"<td>{a.path}</td>"
+            f"<td>{a.ip or ''}</td>"
+            f"<td>{(a.details or '')[:80]}</td>"
+            f"</tr>"
+        )
+
+    return HTMLResponse(f"""
+    <html><head><meta charset="utf-8"><title>Действия пользователей</title>
+    <style>
+      body{{font-family:Arial;margin:20px}}
+      table{{border-collapse:collapse;width:100%}}
+      th,td{{border:1px solid #ccc;padding:6px;font-size:13px}}
+      th{{background:#f0f0f0}}
+    </style>
+    </head><body>
+    <h2>📋 Действия пользователей (последние 500)</h2>
+    <form method="get">
+      <input name="action" placeholder="action" value="{action}">
+      <input name="email" placeholder="email" value="{email}">
+      <button>Фильтр</button>
+      <a href="/admin">← В админку</a>
+    </form>
+    <table>
+      <tr><th>ID</th><th>Время</th><th>Email</th><th>Действие</th><th>Метод</th><th>Путь</th><th>IP</th><th>Детали</th></tr>
+      {rows}
+    </table>
+    </body></html>
+    """)
+# === /PATCH patch_admin_actions.py ===
+
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_panel(request: Request, filter_mode: str = "all", db: Session = Depends(get_db)):
     user = get_current_user(request, db)
@@ -4527,7 +4726,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
             <td style='padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;'>
                 <div style="display:flex;gap:5px;flex-wrap:wrap;">
                     {mark_btn}
-                    <button onclick="delFeedback({f.id})" style="background:#e53e3e;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;">🗑️</button>
+                    <button onclick="replyFeedback({f.id})" style="background:#2b6cb0;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;margin-right:4px;">💬 Ответить</button><button onclick="delFeedback({f.id})" style="background:#e53e3e;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;">🗑️</button>
                 </div>
             </td>
         </tr>"""
@@ -4584,6 +4783,8 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
     </div>
 
     <div class="card" style="overflow-x:auto; border-top-color:#805ad5;">
+        <p style="margin:0 0 8px 0;"><script>async function replyFeedback(id){{const reply=prompt("Ответ пользователю:");if(!reply)return;const fd=new FormData();fd.append("reply",reply);const r=await fetch("/admin/feedback/reply/"+id,{{method:"POST",body:fd}});if(r.ok)location.reload();else alert("Ошибка");}}</script>
+<a href="/admin/actions" style="display:inline-block;padding:6px 12px;background:#3182ce;color:white;text-decoration:none;border-radius:6px;font-weight:600;">📋 Действия пользователей</a></p>
     <h3 style="margin-top:0;">📮 Обратная связь{feedback_badge}</h3>
     <p style="font-size:12px;color:#718096;">Сообщения от пользователей. Отмечайте прочитанные, удаляйте ненужные.</p>
     <table>
@@ -4778,6 +4979,26 @@ async def admin_clear_ai_cache(request: Request, db: Session = Depends(get_db)):
     db.commit()
     print(f"[ADMIN] Очищено записей кэша: {deleted}")
     return RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
+
+
+# === PATCH patch_feedback_reply.py: роут ответа ===
+@app.post("/admin/feedback/reply/{feedback_id}")
+async def admin_feedback_reply(feedback_id: int, request: Request, reply: str = Form(...), db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        return RedirectResponse("/login", status_code=303)
+    fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
+    if fb:
+        fb.admin_reply = reply
+        fb.replied_at = datetime.utcnow()
+        fb.is_read = True
+        db.commit()
+        try:
+            log_action(user, "feedback_replied", request, db, feedback_id=feedback_id)
+        except Exception as _e:
+            print(f"[LOG_ACTION] feedback_replied: {_e}")
+    return RedirectResponse("/admin", status_code=303)
+# === /PATCH patch_feedback_reply.py ===
 
 
 @app.post("/admin/feedback/mark-read/{feedback_id}")

@@ -2543,6 +2543,10 @@ def parse_uploaded_file(file_bytes: bytes, filename: str) -> list:
                 extracted.append({"name": name, "version": ver})
         else:
             text = file_bytes.decode("utf-8", errors="ignore")
+            # === PATCH patch_csv_parser.py ===
+            # Поддержка запятых и точек с запятой как разделителей:
+            text = text.replace(";", "\n").replace(",", "\n")
+            # === /PATCH patch_csv_parser.py ===
             for line in text.splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
@@ -3398,10 +3402,10 @@ FILE_UPLOAD_HTML = """
                 <span style="font-size: 22px;">✏️</span>
                 <div>
                     <div style="font-size: 15px; font-weight: 700; color: #2d3748;">Способ 2: Текст</div>
-                    <div style="font-size: 11px; color: #718096;">Список вида имя==версия</div>
+                    <div style="font-size: 11px; color: #718096;">Список: имя==версия (через запятую, точку с запятой или с новой строки)</div>
                 </div>
             </div>
-            <textarea name="text_input" maxlength="500" placeholder="fastapi==0.115.6&#10;pandas==2.2.3&#10;sqlalchemy==2.0.35" style="width: 100%; min-height: 100px; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; resize: vertical; box-sizing: border-box; background: #f8fafc; line-height: 1.5;"></textarea>
+            <textarea name="text_input" maxlength="500" placeholder="fastapi==0.115.6, pandas==2.2.3;&#10;sqlalchemy==2.0.35, numpy" style="width: 100%; min-height: 100px; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; resize: vertical; box-sizing: border-box; background: #f8fafc; line-height: 1.5;"></textarea>
         </div>
 
     </div>

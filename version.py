@@ -9,10 +9,24 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.6"
+VERSION_FALLBACK = "9.5.7"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.7",
+        "date": "2026-10-01",
+        "changes": [
+            "- KB: +365 пакетов для 5 экосистем",
+            "• NPM (top-130): react, vue, express, axios, webpack, jest, typescript, moment, request",
+            "• NuGet (top-60): Newtonsoft.Json, Serilog, AutoMapper, Dapper, NUnit, xUnit, Moq, Polly, MySql.Data, Hangfire",
+            "• Rust (top-56): serde, tokio, axum, reqwest, diesel, sqlx",
+            "• Go (top-56): gin, gorm, cobra, zap, testify, aws-sdk-go",
+            "• Composer (top-63): laravel/framework, symfony/console, guzzle, doctrine, phpunit",
+            "- Иностранные облачные SDK (AWS, Google Cloud, Azure) помечены «Требует внимания»",
+            "- Проприетарные SaaS (Mailchimp) — «Запрещено»",
+        ]
+    },
     {
         "version": "9.5.6",
         "date": "2026-09-30",

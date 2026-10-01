@@ -638,7 +638,10 @@ DEFAULT_RULES = {
 
     # ============ Инструменты разработки (DevTools) ============
     "git": {"license": "GPL-2.0", "status": "✅ Разрешено", "recommendation": "Git — распределённая СКВ."},
-    "gitlab": {"license": "MIT (CE) / Proprietary (EE)", "status": "✅ Разрешено", "recommendation": "GitLab Community Edition — MIT."},
+    "gitlab": {"license": "MIT (CE) / Proprietary (EE)", "status": "⚠️ Требует внимания", "recommendation": "GitLab CE (MIT) — свободная лицензия. EE-версия проприетарная, правообладатель GitLab Inc. (США) ушёл с рынка РФ. Российский аналог: GitFlic, AppSec.Code."},  # PATCH patch_fix_gitlab_license
+    "gitlab-ee": {"license": "Proprietary (EE)", "status": "❌ Запрещено", "recommendation": "GitLab Enterprise Edition — проприетарная лицензия, правообладатель (GitLab Inc., США) ушёл с рынка РФ. Российский аналог: GitFlic, AppSec.Code."},
+    "gitlab ee": {"license": "Proprietary (EE)", "status": "❌ Запрещено", "recommendation": "GitLab Enterprise Edition — проприетарная лицензия. Российский аналог: GitFlic, AppSec.Code."},
+    "gitlab enterprise": {"license": "Proprietary (EE)", "status": "❌ Запрещено", "recommendation": "GitLab Enterprise Edition — проприетарная лицензия. Российский аналог: GitFlic, AppSec.Code."},
     "gitlab community": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "GitLab CE."},
     "gitea": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Gitea — открытый Git-сервер."},
     "jenkins": {"license": "MIT", "status": "✅ Разрешено", "recommendation": "Jenkins — CI/CD."},

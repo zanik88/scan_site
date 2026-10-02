@@ -9,10 +9,19 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.7"
+VERSION_FALLBACK = "9.5.8"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.8",
+        "date": "2026-10-02",
+        "changes": [
+            "- KB: HCE OS (Huawei Cloud EulerOS) — распознавание и правила",
+            "- KB: виртуализация — VMware, VirtualBox, Hyper-V, Proxmox, oVirt, zVirt",
+            "- Timezone: отображение дат в МСК (UTC+3) в админке, /dashboard, /admin/actions",
+        ]
+    },
     {
         "version": "9.5.7",
         "date": "2026-10-01",

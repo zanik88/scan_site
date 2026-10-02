@@ -407,6 +407,29 @@ DEFAULT_RULES = {
     "euleros": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS."},
     "euler os": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS."},
     "huawei cloud euleros": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS."},
+    # PATCH patch_fix_vmware — виртуализация
+    "vmware": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware (Broadcom, США) — проприетарная. Ушла с рынка РФ. Российский аналог: zVirt (Astra), ПК СВ «Брест». Open-source: oVirt, Proxmox."},
+    "vmware workstation": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware Workstation Pro (Broadcom, США). Аналог: zVirt."},
+    "vmware workstation pro": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware Workstation Pro. Аналог: zVirt."},
+    "vmware workstation player": {"license": "Proprietary (free for personal)", "status": "⚠️ Требует внимания", "recommendation": "VMware Workstation Player — бесплатно только для личного использования."},
+    "vmware esxi": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware ESXi (Broadcom, США). Аналог: zVirt, ПК СВ «Брест»."},
+    "vmware esx": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware ESX. Аналог: zVirt."},
+    "vmware vsphere": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware vSphere. Аналог: zVirt."},
+    "vmware vcenter": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware vCenter. Аналог: zVirt."},
+    "vmware vcenter server": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware vCenter Server. Проприетарная."},
+    "vmware horizon": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware Horizon. Проприетарная."},
+    "vmware nsx": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware NSX. Проприетарная."},
+    "vmware fusion": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware Fusion (macOS). Проприетарная."},
+    "vmware tools": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware Tools. Часть VMware."},
+    "vmware vrealize": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "VMware vRealize. Проприетарная."},
+    "virtualbox": {"license": "GPL-2.0 / Proprietary (Extension Pack)", "status": "⚠️ Требует внимания", "recommendation": "VirtualBox (Oracle). База — GPL-2.0, Extension Pack — проприетарная."},
+    "virtualbox extension pack": {"license": "Proprietary (Oracle)", "status": "⚠️ Требует внимания", "recommendation": "VirtualBox Extension Pack. Проприетарная (Oracle)."},
+    "hyper-v": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "Microsoft Hyper-V. Часть Windows Server."},
+    "parallels desktop": {"license": "Proprietary", "status": "⚠️ Требует внимания", "recommendation": "Parallels Desktop (Parallels, США). Проприетарная."},
+    "proxmox": {"license": "AGPL-3.0 / Commercial", "status": "⚠️ Требует внимания", "recommendation": "Proxmox VE. AGPL-3.0 или коммерческая подписка."},
+    "proxmox ve": {"license": "AGPL-3.0 / Commercial", "status": "⚠️ Требует внимания", "recommendation": "Proxmox VE. AGPL-3.0 или коммерческая."},
+    "ovirt": {"license": "Apache-2.0", "status": "✅ Разрешено", "recommendation": "oVirt — open-source платформа виртуализации. Apache 2.0."},
+    "zvirt": {"license": "Proprietary (Российское ПО)", "status": "✅ Разрешено", "recommendation": "zVirt (Astra Linux) — российское решение виртуализации (реестр российского ПО)."},
     "postgres pro": {"license": "Commercial", "status": "✅ Разрешено (Российское ПО)", "recommendation": "Postgres Pro (реестр №104)."},
     "postgrespro": {"license": "Commercial", "status": "✅ Разрешено (Российское ПО)", "recommendation": "Postgres Pro (реестр №104)."},
     "криптопро": {"license": "Commercial", "status": "✅ Разрешено (Российское ПО)", "recommendation": "КриптоПро CSP (реестр №2855)."},
@@ -2192,6 +2215,8 @@ def _is_garbage_component(name: str) -> bool:
                 "elastic", "opensearch", "fluent", "opentelemetry",
                 "py", "torch", "tensor", "flow", "open", "policy",
             "hce", "euleros", "euler", "os", "distro", "distribution",  # PATCH patch_fix_hce_os
+            "vmware", "workstation", "virtualbox", "hyper-v", "hypervisor",
+            "kvm", "qemu", "parallels", "esxi", "vsphere", "vcenter", "proxmox", "ovirt",  # PATCH patch_fix_vmware
             ]
             lower = n.lower()
             if not any(m in lower for m in product_markers):

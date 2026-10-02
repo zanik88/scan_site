@@ -11,6 +11,21 @@ from collections import defaultdict
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
+# === PATCH patch_msk_timezone ===
+from datetime import timezone as _tz, timedelta as _td
+MSK_TZ = _tz(_td(hours=3))
+
+def to_msk(dt):
+    """Конвертирует UTC datetime в МСК (UTC+3). Для отображения."""
+    if dt is None:
+        return None
+    if not hasattr(dt, "tzinfo"):
+        return dt
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_tz.utc)
+    return dt.astimezone(MSK_TZ)
+# === /PATCH patch_msk_timezone ===
+
 from typing import List, Optional
 
 import aiohttp
@@ -4590,7 +4605,7 @@ def _user_feedback_html(user, db):
                 )
             rows.append(
                 '<tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;vertical-align:top;'
-                'font-size:12px;white-space:nowrap;">' + fb.created_at.strftime("%Y-%m-%d %H:%M") + '</td>'
+                'font-size:12px;white-space:nowrap;">' + to_msk(fb.created_at).strftime("%Y-%m-%d %H:%M") + '</td>'
                 '<td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:12px;">'
                 '<b>' + (fb.subject or "—") + '</b><br>' + fb.message + reply_html + '</td></tr>'
             )
@@ -4620,7 +4635,7 @@ async def dashboard(user: User = Depends(get_current_user), db: Session = Depend
     reports = db.query(AuditReport).filter(AuditReport.user_id == user.id).order_by(AuditReport.created_at.desc()).all()
     rows = "".join([
         f"<tr><td style='padding:12px;border-bottom:1px solid #e2e8f0;'><a href='/audit/{r.id}/result'>{r.filename}</a></td>"
-        f"<td style='padding:12px;border-bottom:1px solid #e2e8f0;'>{r.created_at.strftime('%Y-%m-%d %H:%M')}</td>"
+        f"<td style='padding:12px;border-bottom:1px solid #e2e8f0;'>{to_msk(r.created_at).strftime('%Y-%m-%d %H:%M')}</td>"
         f"<td style='padding:12px;border-bottom:1px solid #e2e8f0;'><a href='/download_excel/{r.excel_filename}'>Excel</a></td>"
         f"<td style='padding:12px;border-bottom:1px solid #e2e8f0;'><form method='POST' action='/reports/delete/{r.id}' style='margin:0;'><button type='submit' style='background:none;border:none;color:#e53e3e;cursor:pointer;'>Удалить</button></form></td></tr>"
         for r in reports if r.status == "completed"
@@ -4658,7 +4673,7 @@ async def dashboard(user: User = Depends(get_current_user), db: Session = Depend
     </form>
     {_user_feedback_html(user, db)}
 <h3 style="margin-top:30px;">Архив проверок</h3>
-    <table><tr><th>Файл</th><th>Дата</th><th>Excel</th><th>Действие</th></tr>{rows if rows else "<tr><td colspan='4' style='padding:20px;text-align:center;'>История пуста</td></tr>"}</table>
+    <table><tr><th>Файл</th><th>Дата (МСК)</th><th>Excel</th><th>Действие</th></tr>{rows if rows else "<tr><td colspan='4' style='padding:20px;text-align:center;'>История пуста</td></tr>"}</table>
     </div>{FOOTER_HTML}</body></html>
     """)
 
@@ -5071,7 +5086,7 @@ async def admin_actions(request: Request, action: str = "", email: str = "", db:
         rows += (
             f"<tr>"
             f"<td>{a.id}</td>"
-            f"<td>{a.created_at}</td>"
+            f"<td>{to_msk(a.created_at).strftime('%Y-%m-%d %H:%M:%S') if a.created_at else ''}</td>"  # PATCH patch_msk_timezone
             f"<td>{a.email or ''}</td>"
             f"<td>{a.action}</td>"
             f"<td>{a.method}</td>"
@@ -5184,7 +5199,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.owner.email if r.owner else '—'}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.filename}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.cve_count or 0}</td>"
-        f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{r.created_at.strftime('%Y-%m-%d %H:%M')}</td>"
+        f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'>{to_msk(r.created_at).strftime('%Y-%m-%d %H:%M')}</td>"
         f"<td style='padding:10px;border-bottom:1px solid #e2e8f0;'><button onclick='delReport({r.id})' style='background:#e53e3e;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;'>Удалить</button></td></tr>"
         for r in all_reports
     ])
@@ -5195,7 +5210,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
         unread_mark = "" if f.is_read else "🔵 "
         mark_btn = "" if f.is_read else f'<button onclick="markRead({f.id})" style="background:#3182ce;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;">✓ Прочитано</button>'
         feedback_html += f"""<tr style="background:{row_bg};">
-            <td style='padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;'><b>{unread_mark}#{f.id}</b><br><small>{f.created_at.strftime('%Y-%m-%d %H:%M')}</small></td>
+            <td style='padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;'><b>{unread_mark}#{f.id}</b><br><small>{to_msk(f.created_at).strftime('%Y-%m-%d %H:%M')}</small></td>
             <td style='padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;'><b>{f.name}</b><br><a href="mailto:{f.email}" style="color:#3182ce;font-size:12px;">{f.email}</a></td>
             <td style='padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;'><b style="color:#2b6cb0;font-size:13px;">{f.subject or '—'}</b></td>
             <td style='padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;font-size:13px;'>{f.message}</td>
@@ -5264,7 +5279,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
     <h3 style="margin-top:0;">📮 Обратная связь{feedback_badge}</h3>
     <p style="font-size:12px;color:#718096;">Сообщения от пользователей. Отмечайте прочитанные, удаляйте ненужные.</p>
     <table>
-        <tr><th>Дата</th><th>Отправитель</th><th>Тема</th><th>Сообщение</th><th>Действие</th></tr>
+        <tr><th>Дата (МСК)</th><th>Отправитель</th><th>Тема</th><th>Сообщение</th><th>Действие</th></tr>
         {feedback_html if feedback_html else '<tr><td colspan="5" style="padding:20px;text-align:center;color:#718096;">Пока нет обращений</td></tr>'}
     </table>
     </div>
@@ -5317,7 +5332,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
   <button onclick="deleteSelectedReports()" style="background:#e53e3e;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">🗑 Удалить выбранные</button>
   <button onclick="deleteAllReports()" style="background:#742a2a;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">🗑 Удалить ВСЕ отчёты</button>
 </div>
-    <table><tr><th style="width:30px;"><input type="checkbox" id="selAllReports"></th><th>ID</th><th>Владелец</th><th>Файл</th><th>CVE</th><th>Дата</th><th>Действие</th></tr>{reports_html if reports_html else '<tr><td colspan="7" style="padding:20px;text-align:center;">Нет проверок</td></tr>'}</table>
+    <table><tr><th style="width:30px;"><input type="checkbox" id="selAllReports"></th><th>ID</th><th>Владелец</th><th>Файл</th><th>CVE</th><th>Дата (МСК)</th><th>Действие</th></tr>{reports_html if reports_html else '<tr><td colspan="7" style="padding:20px;text-align:center;">Нет проверок</td></tr>'}</table>
     </div>
 
     <div class="card">

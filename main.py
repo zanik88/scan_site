@@ -401,6 +401,12 @@ DEFAULT_RULES = {
     "red os": {"license": "Commercial / FSTEC", "status": "✅ Разрешено (Российское ПО)", "recommendation": "РЕД ОС (реестр №3751)."},
     "роса": {"license": "Commercial / FSTEC", "status": "✅ Разрешено (Российское ПО)", "recommendation": "РОСА (реестр №1610)."},
     "rosa": {"license": "Commercial / FSTEC", "status": "✅ Разрешено (Российское ПО)", "recommendation": "РОСА (реестр №1610)."},
+    "hce os": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS — Linux-дистрибутив. Ядро GPL-2.0, библиотеки LGPL-2.1."},  # PATCH patch_fix_hce_os
+    "hce os 2.0": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS 2.0 — Linux-дистрибутив."},
+    "hce": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS."},
+    "euleros": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS."},
+    "euler os": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS."},
+    "huawei cloud euleros": {"license": "GPL-2.0 / LGPL-2.1", "status": "✅ Разрешено", "recommendation": "Huawei Cloud EulerOS."},
     "postgres pro": {"license": "Commercial", "status": "✅ Разрешено (Российское ПО)", "recommendation": "Postgres Pro (реестр №104)."},
     "postgrespro": {"license": "Commercial", "status": "✅ Разрешено (Российское ПО)", "recommendation": "Postgres Pro (реестр №104)."},
     "криптопро": {"license": "Commercial", "status": "✅ Разрешено (Российское ПО)", "recommendation": "КриптоПро CSP (реестр №2855)."},
@@ -1283,7 +1289,8 @@ def _detect_category(name: str) -> str:
     os_keys = ["windows", "linux", "ubuntu", "debian", "centos", "rhel", "fedora",
                "suse", "alpine", "astra", "macos", "freebsd", "openbsd", "gentoo",
                "almalinux", "rocky", "opensuse", "slackware", "mandriva", "mint",
-               "busybox", "systemd", "glibc", "bash"]
+               "busybox", "systemd", "glibc", "bash",
+        "hce", "hce os", "euleros", "euler", "euler os", "huawei cloud euleros"]  # PATCH patch_fix_hce_os
     if any(_has_word(n, k) for k in os_keys) or "red hat" in n or "alt linux" in n or "ред ос" in n or "red os" in n or "роса" in n:
         return "Операционные системы"
 
@@ -2184,6 +2191,7 @@ def _is_garbage_component(name: str) -> bool:
                 "hashicorp", "vault", "consul", "nomad", "boundary",
                 "elastic", "opensearch", "fluent", "opentelemetry",
                 "py", "torch", "tensor", "flow", "open", "policy",
+            "hce", "euleros", "euler", "os", "distro", "distribution",  # PATCH patch_fix_hce_os
             ]
             lower = n.lower()
             if not any(m in lower for m in product_markers):

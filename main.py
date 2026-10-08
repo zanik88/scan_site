@@ -10,6 +10,7 @@ import time
 from collections import defaultdict
 import time
 from collections import defaultdict
+import base64
 from datetime import datetime, timedelta
 # === PATCH patch_msk_timezone ===
 from datetime import timezone as _tz, timedelta as _td
@@ -3877,6 +3878,10 @@ GUIDELINES_HTML = """
 
 METRIKA_ID = "113107006"
 
+# === PATCH patch_favicon ===
+FAVICON_TAG = '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTAiIGZpbGw9IiMxYTM2NWQiLz48dGV4dCB4PSIzMiIgeT0iNDYiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjQyIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2ZmZmZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+0Jo8L3RleHQ+PC9zdmc+">'
+# === /PATCH patch_favicon ===
+
 METRIKA_SCRIPT = """<!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -3898,6 +3903,17 @@ METRIKA_SCRIPT = """<!-- Yandex.Metrika counter -->
 <!-- /Yandex.Metrika counter -->"""
 
 
+# === PATCH patch_favicon: роут для /favicon.ico ===
+from fastapi.responses import Response as _FavResponse
+
+_FAVICON_BYTES = base64.b64decode(FAVICON_TAG.split("base64,")[1].split('"')[0])
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon_ico():
+    return _FavResponse(content=_FAVICON_BYTES, media_type="image/svg+xml")
+
+# === /PATCH patch_favicon ===
+
 @app.middleware("http")
 async def add_metrika(request: Request, call_next):
     response = await call_next(request)
@@ -3914,6 +3930,10 @@ async def add_metrika(request: Request, call_next):
         body = b"".join(body_chunks).decode("utf-8", errors="ignore")
 
         # Вставляем метрику перед </head>
+        # === PATCH patch_favicon_fix: favicon вставляем ВСЕГДА ===
+        if "</head>" in body and "FAVICON_INJECTED" not in body:
+            body = body.replace("</head>", FAVICON_TAG + "<!-- FAVICON_INJECTED -->\n</head>", 1)
+        # === /PATCH patch_favicon_fix ===
         if "</head>" in body and "mc.yandex.ru/metrika" not in body:
                         # === PATCH patch_mobile_css_v6.py ===
             _mobile_css = (
@@ -3950,7 +3970,7 @@ async def add_metrika(request: Request, call_next):
             )
             
 
-            body = body.replace("</head>", METRIKA_SCRIPT + _mobile_css + "\n</head>", 1)
+            body = body.replace("</head>", FAVICON_TAG + METRIKA_SCRIPT + _mobile_css + "\n</head>", 1)
             print(f"[METRIKA] Скрипт вставлен в {request.url.path}")
 
         # Формируем новый ответ

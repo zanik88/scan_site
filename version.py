@@ -9,10 +9,19 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.8"
+VERSION_FALLBACK = "9.5.9"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.9",
+        "date": "2026-10-08",
+        "changes": [
+            "- Favicon: SVG-иконка через data URI (синий квадрат с буквой К)",
+            "- Роут /favicon.ico для прямых запросов браузера",
+            "- Вставка favicon независимо от условия Яндекс.Метрики",
+        ]
+    },
     {
         "version": "9.5.8",
         "date": "2026-10-02",

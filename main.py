@@ -3010,6 +3010,36 @@ async def fetch_package_info_with_version(session, package_name, table_version, 
             "github.com/aws/aws-sdk-go-v2": ("Apache-2.0", "Требует внимания", "Apache 2.0. AWS SDK v2. Иностранный провайдер."),
             "cloud.google.com/go": ("Apache-2.0", "Требует внимания", "Apache 2.0. Google Cloud SDK. Иностранный провайдер."),
             "github.com/Azure/azure-sdk-for-go": ("MIT", "Требует внимания", "MIT. Azure SDK. Иностранный провайдер."),
+            # === PATCH patch_kb_go_v2.py ===
+            # Топ-2 Go-фреймворка (были только в детекторе языка, без лицензий):
+            "gin": ("MIT", "Разрешено", "MIT License. Gin Web Framework."),
+            "github.com/gin-gonic/gin": ("MIT", "Разрешено", "MIT License. Gin Web Framework."),
+            "echo": ("MIT", "Разрешено", "MIT License. Echo Web Framework."),
+            "github.com/labstack/echo": ("MIT", "Разрешено", "MIT License. Echo v3."),
+            "github.com/labstack/echo/v4": ("MIT", "Разрешено", "MIT License. Echo v4."),
+            # Дополнительные популярные пакеты:
+            "github.com/jackc/pgx": ("MIT", "Разрешено", "MIT License. pgx (PostgreSQL driver)."),
+            "github.com/jackc/pgx/v5": ("MIT", "Разрешено", "MIT License. pgx v5 (PostgreSQL driver)."),
+            "github.com/golang-jwt/jwt": ("MIT", "Разрешено", "MIT License. golang-jwt."),
+            "github.com/golang-jwt/jwt/v5": ("MIT", "Разрешено", "MIT License. golang-jwt v5."),
+            "github.com/go-playground/validator": ("MIT", "Разрешено", "MIT License. validator."),
+            "github.com/go-playground/validator/v10": ("MIT", "Разрешено", "MIT License. validator v10."),
+            "github.com/joho/godotenv": ("MIT", "Разрешено", "MIT License. godotenv."),
+            "github.com/IBM/sarama": ("MIT", "Разрешено", "MIT License. Sarama (Kafka client)."),
+            "github.com/rabbitmq/amqp091-go": ("BSD-2-Clause", "Разрешено", "BSD-2-Clause. RabbitMQ AMQP 0-9-1 client."),
+            "github.com/minio/minio-go": ("Apache-2.0", "Разрешено", "Apache 2.0. MinIO Go client (S3)."),
+            "github.com/minio/minio-go/v7": ("Apache-2.0", "Разрешено", "Apache 2.0. MinIO Go client v7."),
+            "google.golang.org/protobuf": ("BSD-3-Clause", "Разрешено", "BSD-3-Clause. Protobuf for Go."),
+            "github.com/urfave/negroni": ("MIT", "Разрешено", "MIT License. negroni."),
+            "github.com/go-kit/kit": ("MIT", "Разрешено", "MIT License. Go kit."),
+            # === PATCH patch_kb_go_v3.py === (короткие алиасы Go)
+            "pgx": ("MIT", "Разрешено", "MIT License. pgx (PostgreSQL driver)."),
+            "sarama": ("MIT", "Разрешено", "MIT License. Sarama (Kafka client)."),
+            "godotenv": ("MIT", "Разрешено", "MIT License. godotenv."),
+            "jwt": ("MIT", "Разрешено", "MIT License. golang-jwt."),
+            "go-playground/validator": ("MIT", "Разрешено", "MIT License. Go Playground validator."),
+            # === /PATCH patch_kb_go_v3.py ===
+            # === /PATCH patch_kb_go_v2.py ===
             # === /PATCH patch_kb_go.py ===
 
             # === PATCH patch_kb_composer.py: Composer packages ===

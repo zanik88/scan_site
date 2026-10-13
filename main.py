@@ -5310,7 +5310,6 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
     </div>
 
     <div class="card" style="overflow-x:auto; border-top-color:#805ad5;">
-        <p style="margin:0 0 8px 0;"><script>async function replyFeedback(id){{const reply=prompt("Ответ пользователю:");if(!reply)return;const fd=new FormData();fd.append("reply",reply);const r=await fetch("/admin/feedback/reply/"+id,{{method:"POST",body:fd}});if(r.ok)location.reload();else alert("Ошибка");}}</script>
 <a href="/admin/actions" style="display:inline-block;padding:6px 12px;background:#3182ce;color:white;text-decoration:none;border-radius:6px;font-weight:600;">📋 Действия пользователей</a></p>
     <h3 style="margin-top:0;">📮 Обратная связь{feedback_badge}</h3>
     <p style="font-size:12px;color:#718096;">Сообщения от пользователей. Отмечайте прочитанные, удаляйте ненужные.</p>

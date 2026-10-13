@@ -9,10 +9,19 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.10"
+VERSION_FALLBACK = "9.5.11"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.11",
+        "date": "2026-10-14",
+        "changes": [
+            "Русские CA: Russian Trusted Root/Sub CA, Минцифры, НУЦ Минцифры",
+            "Удалён мёртвый <script>prompt()</script> в админ-панели",
+            "Go: gin, echo + 18 пакетов с лицензиями (pgx, jwt, sarama, godotenv и др.)",
+        ]
+    },
     {
         "version": "9.5.10",
         "date": "2026-10-13",

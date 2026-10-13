@@ -5253,7 +5253,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
             <td style='padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top;'>
                 <div style="display:flex;gap:5px;flex-wrap:wrap;">
                     {mark_btn}
-                    <button onclick="replyFeedback({f.id})" style="background:#2b6cb0;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;margin-right:4px;">💬 Ответить</button><button onclick="delFeedback({f.id})" style="background:#e53e3e;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;">🗑️</button>
+                    <a href="/admin/feedback/reply-form/{f.id}" style="background:#2b6cb0;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;margin-right:4px;text-decoration:none;display:inline-block;">💬 Ответить</a><button onclick="delFeedback({f.id})" style="background:#e53e3e;color:white;border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;">🗑️</button>
                 </div>
             </td>
         </tr>"""
@@ -5601,6 +5601,50 @@ async def admin_feedback_reply(feedback_id: int, request: Request, reply: str = 
             print(f"[LOG_ACTION] feedback_replied: {_e}")
     return RedirectResponse("/admin", status_code=303)
 # === /PATCH patch_feedback_reply.py ===
+
+
+# === PATCH patch_feedback_reply_form.py ===
+@app.get("/admin/feedback/reply-form/{fid}", response_class=HTMLResponse)
+async def admin_feedback_reply_form(fid: int, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user or user.role != "admin":
+        return RedirectResponse("/login", status_code=303)
+    fb = db.query(Feedback).filter(Feedback.id == fid).first()
+    if not fb:
+        return HTMLResponse("<h1>Обращение не найдено</h1>", status_code=404)
+    _created = fb.created_at.strftime("%d.%m.%Y %H:%M") if fb.created_at else ""
+    _subj = fb.subject or "—"
+    _repl = fb.admin_reply or ""
+    return HTMLResponse(content=f"""
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ответ на обращение #{fb.id}</title>
+<style>
+body{{font-family:sans-serif;max-width:720px;margin:40px auto;padding:0 20px;background:#f7fafc;color:#2d3748;}}
+h2{{color:#1a365d;margin-bottom:20px;}}
+.msg{{background:#fff;padding:16px;border-radius:8px;margin-bottom:20px;border-left:4px solid #3182ce;box-shadow:0 1px 3px rgba(0,0,0,0.06);}}
+.msg .meta{{font-size:13px;color:#718096;margin-bottom:10px;}}
+textarea{{width:100%;min-height:180px;padding:12px;font-size:14px;border:1px solid #cbd5e0;border-radius:6px;box-sizing:border-box;font-family:inherit;resize:vertical;outline:none;}}
+textarea:focus{{border-color:#3182ce;}}
+.btn{{padding:10px 22px;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;}}
+.ok{{background:#2b6cb0;color:#fff;}}
+.cancel{{background:#edf2f7;color:#2d3748;margin-left:8px;text-decoration:none;display:inline-block;}}
+.actions{{margin-top:16px;}}
+</style></head><body>
+<h2>Ответ на обращение #{fb.id}</h2>
+<div class="msg">
+  <div class="meta"><b>{fb.name}</b> &lt;{fb.email}&gt; · {_created}</div>
+  <div><b>Тема:</b> {_subj}</div>
+  <div style="margin-top:10px;white-space:pre-wrap;">{fb.message}</div>
+</div>
+<form method="POST" action="/admin/feedback/reply/{fb.id}">
+  <textarea name="reply" required placeholder="Введите ответ...">{_repl}</textarea>
+  <div class="actions">
+    <button type="submit" class="btn ok">Отправить</button>
+    <a href="/admin" class="btn cancel">Отмена</a>
+  </div>
+</form>
+</body></html>
+""")
+# === /PATCH patch_feedback_reply_form.py ===
 
 
 @app.post("/admin/feedback/mark-read/{feedback_id}")

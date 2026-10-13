@@ -9,10 +9,19 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.9"
+VERSION_FALLBACK = "9.5.10"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.10",
+        "date": "2026-10-13",
+        "changes": [
+            "Форма ответа на обращение: отдельная страница вместо prompt()",
+            "Роут GET /admin/feedback/reply-form/{fid} с исходным сообщением пользователя",
+            "Кнопка 'Ответить' в админке заменена на ссылку",
+        ]
+    },
     {
         "version": "9.5.9",
         "date": "2026-10-08",

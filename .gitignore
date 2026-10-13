@@ -57,3 +57,4 @@ backups/main_py/
 patches/
 main.py.working*
 docker-compose.override.yml
+*.bak.*

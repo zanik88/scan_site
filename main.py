@@ -611,6 +611,14 @@ DEFAULT_RULES = {
     "alembic": {"license": "MIT", "status": "Разрешено", "recommendation": "Alembic."},
     "docker": {"license": "Apache-2.0", "status": "Разрешено", "recommendation": "Docker."},
     "openssl": {"license": "OpenSSL / SSLeay", "status": "Разрешено", "recommendation": "OpenSSL."},
+    # === PATCH patch_russian_ca.py ===
+    "russian trusted root ca": {"license": "Russian Trusted Root CA", "status": "Разрешено", "recommendation": "Корневой сертификат Минцифры России."},
+    "russian trusted sub ca": {"license": "Russian Trusted Sub CA", "status": "Разрешено", "recommendation": "Подчинённый сертификат Минцифры России."},
+    "russian trusted root": {"license": "Russian Trusted Root CA", "status": "Разрешено", "recommendation": "Корневой сертификат Минцифры России."},
+    "russian trusted sub": {"license": "Russian Trusted Sub CA", "status": "Разрешено", "recommendation": "Подчинённый сертификат Минцифры России."},
+    "минцифры": {"license": "Russian Trusted Root CA", "status": "Разрешено", "recommendation": "Корневой сертификат Минцифры России."},
+    "нуц минцифры": {"license": "Russian Trusted Root CA", "status": "Разрешено", "recommendation": "Корневой сертификат НУЦ Минцифры России."},
+    # === /PATCH patch_russian_ca.py ===
     "requests": {"license": "Apache-2.0", "status": "Разрешено", "recommendation": "Requests."},
     "pandas": {"license": "BSD-3-Clause", "status": "Разрешено", "recommendation": "Pandas."},
     "numpy": {"license": "BSD-3-Clause", "status": "Разрешено", "recommendation": "NumPy."},

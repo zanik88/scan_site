@@ -1,3 +1,4 @@
+import html  # patch_fix_changelog_xss
 import asyncio
 import hashlib
 import io
@@ -4234,7 +4235,8 @@ async def index(request: Request, user: User = Depends(get_current_user)):
         @media (max-width: 640px) {{
             div[style*="grid-template-columns: 1fr 1fr"] {{ grid-template-columns: 1fr !important; }}
         }}
-        .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 14px; align-items: center; flex-wrap: wrap; gap: 10px; }}
+        .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 13px; align-items: center; flex-wrap: wrap; gap: 6px; }} /* patch_fix_nav_nowrap_v3 */
+        .nav a {{ white-space: nowrap !important; flex-shrink: 0 !important; }} /* patch_fix_nav_nowrap */
         .nav-brand {{ font-weight: 800; color: #1a365d; font-size: 16px; }}
         .card {{ background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid #1a365d; }}
         h1 {{ color: #1a365d; text-align: center; }}
@@ -4502,7 +4504,8 @@ async def feedback_page(user: User = Depends(get_current_user)):
     <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Обратная связь</title>
     <style>
         body {{ font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f7fafc; color: #2d3748; }}
-        .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 14px; flex-wrap: wrap; gap: 10px; }}
+        .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 13px; flex-wrap: wrap; gap: 6px; }} /* patch_fix_nav_nowrap_v3 */
+        .nav a {{ white-space: nowrap !important; flex-shrink: 0 !important; }} /* patch_fix_nav_nowrap */
         .nav-brand {{ font-weight: 800; color: #1a365d; font-size: 16px; }}
         .card {{ background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid #1a365d; }}
         h1 {{ color: #1a365d; }}
@@ -4520,10 +4523,9 @@ async def feedback_page(user: User = Depends(get_current_user)):
 
         <form action="/feedback" method="post">
            <label>Ваше имя *</label>
-<input type="text" name="name" required placeholder="Иван Иванов">
+            <input type="text" name="name" required placeholder="Иван Иванов">
 
             <label>Email для ответа *</label>
-           <
            
                       <input type="email" name="email" required value="{user.email if user else ''}" placeholder="user@example.ru">
 
@@ -4614,7 +4616,8 @@ async def pricing_page(user: User = Depends(get_current_user)):
     <link rel="canonical" href="https://reestr-audit.ru/pricing">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <style>body{{font-family:-apple-system,sans-serif;max-width:1100px;margin:0 auto;padding:20px;background:#f7fafc;color:#2d3748;}}
-    .nav{{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e2e8f0;margin-bottom:30px;font-size:14px;flex-wrap:wrap;gap:10px;}}
+    .nav{{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e2e8f0;margin-bottom:30px;font-size: 13px;flex-wrap:wrap;gap: 6px;}} /* patch_fix_nav_nowrap_v3 */
+        .nav a {{ white-space: nowrap !important; flex-shrink: 0 !important; }} /* patch_fix_nav_nowrap */
     .nav-brand{{font-weight:800;color:#1a365d;font-size:16px;}}
     .grid{{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:30px;}}
     .card{{background:#f8fafc;border:1px solid #cbd5e0;border-radius:8px;padding:25px;width:250px;display:flex;flex-direction:column;justify-content:space-between;}}
@@ -4729,7 +4732,8 @@ async def dashboard(user: User = Depends(get_current_user), db: Session = Depend
     return HTMLResponse(content=f"""
     <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Личный кабинет</title>
     <style>body{{font-family:sans-serif;max-width:950px;margin:0 auto;padding:20px;background:#f7fafc;}}
-    .nav{{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e2e8f0;margin-bottom:30px;font-size:14px;flex-wrap:wrap;gap:10px;}}
+    .nav{{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e2e8f0;margin-bottom:30px;font-size: 13px;flex-wrap:wrap;gap: 6px;}} /* patch_fix_nav_nowrap_v3 */
+        .nav a {{ white-space: nowrap !important; flex-shrink: 0 !important; }} /* patch_fix_nav_nowrap */
     .nav-brand{{font-weight:800;color:#1a365d;font-size:16px;}}
     .card{{background:white;padding:35px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.05);border-top:4px solid #1a365d;}}
     table{{width:100%;border-collapse:collapse;}} th{{background:#1a365d;color:white;padding:12px;text-align:left;}}</style>
@@ -5065,7 +5069,7 @@ async def about_page(user: User = Depends(get_current_user)):
     info = get_version_info()
     changelog_html = ""
     for entry in info["changelog"]:
-        changes_li = "".join([f"<li>{c}</li>" for c in entry["changes"]])
+        changes_li = "".join([f"<li>{html.escape(str(c))}</li>" for c in entry["changes"]])  # patch_fix_changelog_xss
         changelog_html += f"""
         <div style="border-left:4px solid #3182ce;padding:15px 20px;margin-bottom:20px;background:#f8fafc;border-radius:6px;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
@@ -5085,7 +5089,8 @@ async def about_page(user: User = Depends(get_current_user)):
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
     <style>
         body {{ font-family: -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f7fafc; color: #2d3748; }}
-        .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 14px; flex-wrap: wrap; gap: 10px; }}
+        .nav {{ display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px; font-size: 13px; flex-wrap: wrap; gap: 6px; }} /* patch_fix_nav_nowrap_v3 */
+        .nav a {{ white-space: nowrap !important; flex-shrink: 0 !important; }} /* patch_fix_nav_nowrap */
         .nav-brand {{ font-weight: 800; color: #1a365d; font-size: 16px; }}
         .card {{ background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid #1a365d; margin-bottom: 20px; }}
         h1 {{ color: #1a365d; margin-top: 0; }}
@@ -5301,7 +5306,8 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
     return HTMLResponse(content=f"""
     <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Админ-панель</title>
     <style>body{{font-family:sans-serif;max-width:1200px;margin:0 auto;padding:20px;background:#f7fafc;}}
-    .nav{{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e2e8f0;margin-bottom:30px;font-size:14px;flex-wrap:wrap;gap:10px;}}
+    .nav{{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #e2e8f0;margin-bottom:30px;font-size: 13px;flex-wrap:wrap;gap: 6px;}} /* patch_fix_nav_nowrap_v3 */
+        .nav a {{ white-space: nowrap !important; flex-shrink: 0 !important; }} /* patch_fix_nav_nowrap */
     .nav-brand{{font-weight:800;color:#1a365d;font-size:16px;}}
     .card{{background:white;padding:30px;border-radius:8px;margin-bottom:20px;border-top:4px solid #1a365d;}}
     table{{width:100%;border-collapse:collapse;}} th{{background:#1a365d;color:white;padding:12px;text-align:left;font-size:13px;}}

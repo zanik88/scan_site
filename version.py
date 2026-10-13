@@ -18,7 +18,7 @@ CHANGELOG = [
         "date": "2026-10-14",
         "changes": [
             "Русские CA: Russian Trusted Root/Sub CA, Минцифры, НУЦ Минцифры",
-            "Удалён мёртвый <script>prompt()</script> в админ-панели",
+            "Удалён мёртвый prompt-скрипт в админ-панели",
             "Go: gin, echo + 18 пакетов с лицензиями (pgx, jwt, sarama, godotenv и др.)",
         ]
     },

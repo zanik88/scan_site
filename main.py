@@ -1277,6 +1277,7 @@ def _category_badge(cat: str) -> str:
         "Библиотеки": "#38a169",
         "Мониторинг и логирование": "#319795",
         "Очереди сообщений": "#5a67d8",
+        "Виртуализация": "#0891b2",  # PATCH patch_fix_virtualization_category
         "Контейнеризация и оркестрация": "#00b5d8",
         "Облачные сервисы": "#0ea5e9",
         "Игровые движки": "#ed64a6",
@@ -1297,6 +1298,7 @@ def _category_badge(cat: str) -> str:
         "Языки и рантаймы": "Языки",
         "Игровые движки": "Геймдев",
         "Очереди сообщений": "Очереди",
+        "Виртуализация": "Виртуал.",  # PATCH patch_fix_virtualization_category
         "Облачные сервисы": "Облако",
         "IDE и редакторы": "IDE",
     }
@@ -1330,6 +1332,15 @@ def _detect_category(name: str) -> str:
     if any(_has_word(n, k) for k in monitor_keys):
         return "Мониторинг и логирование"
 
+    # Виртуализация и гипервизоры (PATCH patch_fix_virtualization_category)
+    # ВАЖНО: до СУБД, чтобы "Oracle VirtualBox" не попадал в СУБД через "oracle"
+    virt_keys = ["kvm", "qemu", "xen", "hyper-v", "hyperv", "virtualbox",
+                 "vmware", "esx", "esxi", "vsphere", "vcenter", "proxmox",
+                 "virtuozzo", "openstack", "libvirt", "zvirt",
+                 "rosa virtualization", "parallels", "bhyve"]
+    if any(_has_word(n, k) for k in virt_keys):
+        return "Виртуализация"
+
     # СУБД и хранилища (после очередей и мониторинга)
     db_keys = ["postgres", "mysql", "mariadb", "oracle", "sql server", "sqlite", "mongodb",
                "redis", "valkey", "clickhouse", "cassandra", "scylladb", "couchdb", "neo4j",
@@ -1354,7 +1365,8 @@ def _detect_category(name: str) -> str:
                "suse", "alpine", "astra", "macos", "freebsd", "openbsd", "gentoo",
                "almalinux", "rocky", "opensuse", "slackware", "mandriva", "mint",
                "busybox", "systemd", "glibc", "bash",
-        "hce", "hce os", "euleros", "euler", "euler os", "huawei cloud euleros"]  # PATCH patch_fix_hce_os
+        "hce", "hce os", "euleros", "euler", "euler os", "huawei cloud euleros",
+           "accentos", "rosa", "red os", "redos", "alt linux"]  # PATCH patch_fix_virtualization_category  # PATCH patch_fix_hce_os
     if any(_has_word(n, k) for k in os_keys) or "red hat" in n or "alt linux" in n or "ред ос" in n or "red os" in n or "роса" in n:
         return "Операционные системы"
 
@@ -1365,8 +1377,12 @@ def _detect_category(name: str) -> str:
     runtime_keys = ["python", "java", "openjdk", "oracle jdk", "node", "nodejs", "golang",
                     "rust", "cargo", "dotnet", ".net", "ruby", "php", "perl", "jdk",
                     "temurin", "corretto", "zulu"]
-    if any(k in n for k in runtime_keys):
-        return "Языки и рантаймы"
+    def _has_word_or_spec(text_, key):
+        if any(ch in key for ch in " .-+"):
+            return key in text_
+        return _has_word(text_, key)
+    if any(_has_word_or_spec(n, k) for k in runtime_keys):
+        return "Языки и рантаймы"  # PATCH patch_fix_virtualization_category
 
     fw_keys = ["fastapi", "django", "flask", "spring", "starlette", "react", "vue", "angular",
                "next.js", "nuxt", "svelte", "express", "nestjs", "laravel", "rails"]

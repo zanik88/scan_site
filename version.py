@@ -9,10 +9,19 @@ import os
 from datetime import datetime
 
 # Резервная версия, если git-тег недоступен
-VERSION_FALLBACK = "9.5.11"
+VERSION_FALLBACK = "9.5.12"
 
 # История версий (от новых к старым)
 CHANGELOG = [
+    {
+        "version": "9.5.12",
+        "date": "2026-10-23",
+        "changes": [
+            "XSS: HTML-экранирование в CHANGELOG на /about (prompt() больше не вызывается)",
+            "nav: white-space nowrap — меню в одну строку",
+            "Форма обратной связи: убран лишний '<', выровнены поля",
+        ]
+    },
     {
         "version": "9.5.11",
         "date": "2026-10-14",

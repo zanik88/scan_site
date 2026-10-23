@@ -12,7 +12,7 @@ from collections import defaultdict
 import time
 from collections import defaultdict
 import base64
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, timedelta  # PATCH patch_timezone.py
 # === PATCH patch_msk_timezone ===
 from datetime import timezone as _tz, timedelta as _td
 MSK_TZ = _tz(_td(hours=3))
@@ -217,6 +217,10 @@ def _pkv_check_and_clear_cache() -> None:
         print(f"[CACHE] version write failed: {e}")
     print(f"[CACHE] KB changed -> cleared {n} entries -> v={cur_ver}")
 # === /PATCH patch_kb_version.py ===
+
+# PATCH patch_timezone.py
+MSK = timezone(timedelta(hours=3))
+
 app = FastAPI(title="Платформа «Компонент-Эксперт» - ПП РФ № 1236", version=APP_VERSION)
 
 # === PATCH patch_kb_version.py: startup hook ===
@@ -1142,7 +1146,7 @@ async def _get_ai_cache(component_name: str):
             key = (component_name or "").lower().strip()
             if not key:
                 return None
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3)
             cache = db.query(AILicenseCache).filter(AILicenseCache.component_name == key).first()
             if not cache:
                 return None
@@ -1180,7 +1184,7 @@ async def _save_ai_cache(component_name, license_, status, recommendation, provi
                 existing.recommendation = recommendation
                 existing.provider = provider
                 existing.is_failure = is_failure
-                existing.created_at = datetime.utcnow()
+                existing.created_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3)
             else:
                 db.add(AILicenseCache(
                     component_name=key,
@@ -1203,7 +1207,7 @@ def cleanup_ai_cache():
     """Удаляет устаревшие записи кэша ИИ."""
     db = SessionLocal()
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3)
         old_success = db.query(AILicenseCache).filter(
             AILicenseCache.is_failure == False,
             AILicenseCache.created_at < now - timedelta(days=90)
@@ -1797,10 +1801,10 @@ class User(Base):
     subscription_status = Column(String, default="Active")
     free_checks_used = Column(Integer, default=0, nullable=True)
     pro_checks_used = Column(Integer, default=0, nullable=True)
-    pro_period_start = Column(DateTime, default=datetime.utcnow, nullable=True)
+    pro_period_start = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3), nullable=True)
     is_test = Column(Boolean, default=False, nullable=True)
-    last_active = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    last_active = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3))
+    created_at = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3))
     reports = relationship("AuditReport", back_populates="owner")
 
 
@@ -1818,7 +1822,7 @@ class AuditReport(Base):
     warn_count = Column(Integer, default=0, nullable=True)
     danger_count = Column(Integer, default=0, nullable=True)
     cve_count = Column(Integer, default=0, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3))
     owner = relationship("User", back_populates="reports")
 
 
@@ -1836,7 +1840,7 @@ class VisitLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     path = Column(String, nullable=False)
     ip_address = Column(String, nullable=True)
-    visited_at = Column(DateTime, default=datetime.utcnow)
+    visited_at = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3))
 
 
 class Feedback(Base):
@@ -1850,7 +1854,7 @@ class Feedback(Base):
     is_read = Column(Boolean, default=False)
     admin_reply = Column(Text, nullable=True)  # PATCH patch_feedback_reply
     replied_at = Column(DateTime, nullable=True)  # PATCH patch_feedback_reply
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3))
 
 
 class AILicenseCache(Base):
@@ -1863,8 +1867,8 @@ class AILicenseCache(Base):
     provider = Column(String, nullable=True)
     is_failure = Column(Boolean, default=False)
     hit_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    last_used = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3))
+    last_used = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3))
 
 
 # === PATCH patch_action_log.py ===
@@ -1879,7 +1883,7 @@ class UserAction(Base):
     ip = Column(String, nullable=True)
     user_agent = Column(String, nullable=True)
     details = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3), index=True)
 
 
 def log_action(user, action, request=None, db=None, **details):
@@ -2047,7 +2051,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> Optiona
         return None
     user = db.query(User).filter(User.session_token == token).first()
     if user and user.subscription_status != "Blocked":
-        user.last_active = datetime.utcnow()
+        user.last_active = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3)
         db.commit()
         return user
     return None
@@ -2067,7 +2071,7 @@ def get_free_checks_left(user: Optional[User], request: Request, db: Optional[Se
 
     if user and user.subscription_plan in ["Pro", "Unlimited"]:
         # Сброс счётчика Pro раз в 30 дней
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3)
         period_start = user.pro_period_start or user.created_at or now
         days_passed = (now - period_start).days
         if days_passed >= 30:
@@ -3636,7 +3640,7 @@ async def process_audit_task(report_id: int, file_bytes: bytes, filename: str, i
                 "cve_list": [],
             })
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = (datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4)).strftime("%Y%m%d%H%M%S")
         clean_base = re.sub(r"[^\w\-_\.]", "_", filename.split(".")[0])
         excel_filename = f"audit_{timestamp}_{clean_base}.xlsx"
         await asyncio.to_thread(generate_excel_report, report_data, excel_filename)
@@ -3720,7 +3724,7 @@ async def process_docker_scan_task(report_id: int, image_name: str):
         except Exception as e:
             print(f"[OSV] Ошибка проверки уязвимостей (Docker): {e}")
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = (datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4)).strftime("%Y%m%d%H%M%S")
         clean_img = re.sub(r"[^\w\-_.]", "_", image_name)
         excel_filename = f"docker_{timestamp}_{clean_img}.xlsx"
         await asyncio.to_thread(generate_excel_report, report_data, excel_filename)
@@ -4174,7 +4178,7 @@ Sitemap: {base_url}/sitemap.xml
 async def sitemap_xml(request: Request):
     base_url = "https://reestr-audit.ru"
     from datetime import datetime as dt
-    today = dt.utcnow().strftime("%Y-%m-%d")
+    today = dt.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3).strftime("%Y-%m-%d")
     pages = [
         ("", "1.0", "daily"),
         ("about", "0.8", "weekly"),
@@ -5253,7 +5257,7 @@ async def admin_panel(request: Request, filter_mode: str = "all", db: Session = 
         savings_min = 0
         savings_requests = 0
     unread_feedback = sum(1 for f in all_feedback if not f.is_read)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3)
     online_count = sum(1 for u in all_users if u.last_active and (now - u.last_active) < timedelta(minutes=15))
     week_ago = now - timedelta(days=7)
     monthly_ago = now - timedelta(days=30)
@@ -5651,7 +5655,7 @@ async def admin_feedback_reply(feedback_id: int, request: Request, reply: str = 
     fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
     if fb:
         fb.admin_reply = reply
-        fb.replied_at = datetime.utcnow()
+        fb.replied_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=4) + timedelta(hours=3)
         fb.is_read = True
         db.commit()
         try:
@@ -5728,3 +5732,7 @@ async def admin_delete_feedback(feedback_id: int, request: Request, db: Session 
         db.delete(fb)
         db.commit()
     return JSONResponse({"status": "ok"})
+
+# PATCH patch_timezone_final.py
+
+# PATCH patch_timezone_samara.py
